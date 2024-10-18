@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const encryptedData = btoa(JSON.stringify({
             id: product.id,
             name: product.name,
-            price: product.currentPrice,
+            currentPrice: product.currentPrice,
             imageUrl: product.imageUrl,
             description: product.description,
             category: product.category
