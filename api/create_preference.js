@@ -53,12 +53,14 @@ module.exports = async (req, res) => {
             preference_id: response.body.id
         });
 
+        console.log('QR Code gerado:', qrCode);
+
         res.json({ 
             id: response.body.id,
             qr_code: qrCode.response.qr_data
         });
     } catch (error) {
         console.error('Erro ao criar preferência:', error);
-        res.status(500).json({ error: 'Erro interno do servidor' });
+        res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
     }
 };
