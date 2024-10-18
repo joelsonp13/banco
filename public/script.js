@@ -47,14 +47,10 @@ document.getElementById('buyButton').addEventListener('click', async () => {
 
         if (data.qr_code_url) {
             qrCodeContainer.innerHTML = ''; // Limpa o conteúdo anterior
-            await QRCode.toCanvas(qrCodeContainer, data.qr_code_url, {
-                width: 256,
-                margin: 1,
-                color: {
-                    dark: '#000000',
-                    light: '#ffffff'
-                }
-            });
+            const qrCodeImg = document.createElement('img');
+            qrCodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.qr_code_url)}`;
+            qrCodeImg.alt = 'QR Code de Pagamento';
+            qrCodeContainer.appendChild(qrCodeImg);
         } else {
             qrCodeContainer.innerHTML = 'QR Code não disponível';
         }
