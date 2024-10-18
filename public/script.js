@@ -36,16 +36,15 @@ document.getElementById('buyButton').addEventListener('click', async () => {
 
         const data = await response.json();
 
-        // Exibir o QR code ou link
+        // Exibir o QR code
         const qrCodeContainer = document.getElementById('qrCodeContainer');
-        if (data.qr_code_base64) {
-            qrCodeContainer.innerHTML = `<img src="data:image/png;base64,${data.qr_code_base64}" alt="QR Code para pagamento">`;
-        } else {
-            // Se não tiver QR code, gerar um usando a biblioteca qrcode-generator
+        if (data.qr_code) {
             const qr = qrcode(0, 'L');
-            qr.addData(data.qr_code_url);
+            qr.addData(data.qr_code);
             qr.make();
             qrCodeContainer.innerHTML = qr.createImgTag(5);
+        } else {
+            qrCodeContainer.innerHTML = '<p>Não foi possível gerar o QR code.</p>';
         }
 
         // Adicionar link abaixo do QR code
