@@ -57,6 +57,7 @@ module.exports = async (req, res) => {
 
             res.status(200).json({
                 preference_id: response.body.id,
+                payment_id: pixPayment.body.id,
                 init_point: response.body.init_point,
                 sandbox_init_point: response.body.sandbox_init_point,
                 qr_code: pixPayment.body.point_of_interaction.transaction_data.qr_code,

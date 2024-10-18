@@ -115,13 +115,17 @@ async function generateQRCode(product) {
     }
 }
 
-async function checkPaymentStatus(preferenceId) {
+async function checkPaymentStatus(paymentId) {
     const statusCheckInterval = setInterval(async () => {
         try {
-            const response = await fetch(`/api/check_payment_status?payment_id=${preferenceId}`);
+            const response = await fetch(`/api/check_payment_status?payment_id=${paymentId}`);
             const data = await response.json();
 
-            console.log('Status do pagamento:', data.status); // Adicione este log
+            if (!response.ok) {
+                throw new Error(data.error || 'Erro ao verificar status do pagamento');
+            }
+
+            console.log('Status do pagamento:', data.status);
 
             if (data.status === 'approved') {
                 clearInterval(statusCheckInterval);
@@ -132,8 +136,10 @@ async function checkPaymentStatus(preferenceId) {
             }
         } catch (error) {
             console.error('Erro ao verificar status do pagamento:', error);
+            clearInterval(statusCheckInterval);
+            showPaymentError(error.message);
         }
-    }, 5000); // Verifica a cada 5 segundos
+    }, 5000);
 }
 
 function showPaymentConfirmation() {

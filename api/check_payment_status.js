@@ -13,7 +13,11 @@ module.exports = async (req, res) => {
 
     try {
         const payment = await mercadopago.payment.get(payment_id);
-        console.log('Resposta do Mercado Pago:', JSON.stringify(payment, null, 2)); // Adicione este log
+        console.log('Resposta do Mercado Pago:', JSON.stringify(payment, null, 2));
+
+        if (!payment || !payment.body) {
+            throw new Error('Resposta inválida do Mercado Pago');
+        }
 
         res.status(200).json({ 
             status: payment.body.status,
@@ -21,6 +25,9 @@ module.exports = async (req, res) => {
         });
     } catch (error) {
         console.error('Erro ao verificar status do pagamento:', error);
-        res.status(500).json({ error: 'Erro ao verificar status do pagamento' });
+        res.status(500).json({ 
+            error: 'Erro ao verificar status do pagamento',
+            details: error.message
+        });
     }
 };
