@@ -2,26 +2,29 @@ const mercadopago = require('mercadopago');
 const qrcode = require('qrcode');
 
 module.exports = async (req, res) => {
-    console.log('Recebida requisição para criar preferência');
+    console.log('1. Recebida requisição para criar preferência');
 
     if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
-        console.error('Token de acesso do Mercado Pago não configurado');
+        console.error('2. ERRO: Token de acesso do Mercado Pago não configurado');
         return res.status(500).json({ error: 'Configuração do servidor incompleta' });
     }
 
-    console.log('Token de acesso do Mercado Pago obtido com sucesso');
-
-    mercadopago.configure({
-        access_token: process.env.MERCADO_PAGO_ACCESS_TOKEN
-    });
+    console.log('3. Token de acesso do Mercado Pago obtido com sucesso');
+    console.log('4. Primeiros 10 caracteres do token:', process.env.MERCADO_PAGO_ACCESS_TOKEN.substring(0, 10) + '...');
 
     try {
+        console.log('5. Configurando Mercado Pago');
+        mercadopago.configure({
+            access_token: process.env.MERCADO_PAGO_ACCESS_TOKEN
+        });
+        console.log('6. Mercado Pago configurado com sucesso');
+
         const { title, price, quantity } = req.body;
 
-        console.log('Dados recebidos:', { title, price, quantity });
+        console.log('7. Dados recebidos:', { title, price, quantity });
 
         if (!title || typeof price !== 'number' || price <= 0 || !Number.isInteger(quantity) || quantity <= 0) {
-            console.error('Dados inválidos recebidos');
+            console.error('8. ERRO: Dados inválidos recebidos');
             return res.status(400).json({ error: 'Dados inválidos' });
         }
 
@@ -43,26 +46,29 @@ module.exports = async (req, res) => {
             binary_mode: true
         };
 
-        console.log('Criando preferência:', preference);
+        console.log('9. Criando preferência:', preference);
 
         const response = await mercadopago.preferences.create(preference);
 
-        console.log('Resposta do Mercado Pago:', JSON.stringify(response.body, null, 2));
+        console.log('10. Resposta do Mercado Pago recebida');
+        console.log('11. Resposta do Mercado Pago:', JSON.stringify(response.body, null, 2));
 
-        // Gerar QR code manualmente
+        console.log('12. Gerando QR code');
         const qrCodeData = response.body.init_point;
         const qrCodeBase64 = await qrcode.toDataURL(qrCodeData);
+        console.log('13. QR code gerado com sucesso');
 
+        console.log('14. Enviando resposta ao cliente');
         res.json({ 
             id: response.body.id,
             init_point: response.body.init_point,
             qr_code: qrCodeData,
             qr_code_base64: qrCodeBase64.split(',')[1], // Remove o prefixo "data:image/png;base64,"
-            // Remova a linha abaixo para não enviar a resposta completa
-            // full_response: response.body
         });
+        console.log('15. Resposta enviada com sucesso');
     } catch (error) {
-        console.error('Erro ao criar preferência:', error);
+        console.error('16. ERRO ao criar preferência:', error);
+        console.error('17. Stack do erro:', error.stack);
         res.status(500).json({ 
             error: 'Erro interno do servidor',
             details: error.message,
