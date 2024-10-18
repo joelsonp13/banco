@@ -33,6 +33,7 @@ module.exports = async (req, res) => {
                 ],
                 installments: 1
             },
+            external_reference: "QR_CODE_PAYMENT",
         };
 
         const response = await mercadopago.preferences.create(preference);
@@ -41,9 +42,17 @@ module.exports = async (req, res) => {
             throw new Error('ID da preferência não recebido do Mercado Pago');
         }
 
-        const qrCodeUrl = `https://www.mercadopago.com.br/qr/${response.body.id}`;
+        const qrCodeData = await mercadopago.qr.create({
+            external_reference: response.body.id,
+            amount: Number(price),
+            description: title,
+        });
 
-        res.json({ qr_code_url: qrCodeUrl });
+        if (!qrCodeData.body || !qrCodeData.body.qr_data) {
+            throw new Error('Dados do QR code não recebidos do Mercado Pago');
+        }
+
+        res.json({ qr_code_data: qrCodeData.body.qr_data });
     } catch (error) {
         console.error('ERRO ao criar preferência de pagamento:', error);
         res.status(500).json({ 

@@ -45,10 +45,10 @@ document.getElementById('buyButton').addEventListener('click', async () => {
 
         const data = await response.json();
 
-        if (data.qr_code_url) {
+        if (data.qr_code_data) {
             qrCodeContainer.innerHTML = ''; // Limpa o conteúdo anterior
             const qrCodeImg = document.createElement('img');
-            qrCodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.qr_code_url)}`;
+            qrCodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.qr_code_data)}`;
             qrCodeImg.alt = 'QR Code de Pagamento';
             qrCodeContainer.appendChild(qrCodeImg);
 
