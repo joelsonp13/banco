@@ -138,24 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const buyNowBtn = document.getElementById('buyNowBtn');
         buyNowBtn.addEventListener('click', () => buyNow(product));
-
-        const buyButton = document.createElement('button');
-        buyButton.textContent = 'Comprar Agora';
-        buyButton.className = 'bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition-all duration-300 neon-border mt-4';
-        buyButton.addEventListener('click', () => {
-            const encryptedData = btoa(JSON.stringify({
-                id: product.id,
-                name: product.name,
-                currentPrice: product.currentPrice,
-                image: product.image,
-                description: product.description,
-                category: product.category
-            }));
-
-            window.location.href = `comprar.html?data=${encryptedData}`;
-        });
-
-        productDetails.appendChild(buyButton);
     }
 
     function buyNow(product) {

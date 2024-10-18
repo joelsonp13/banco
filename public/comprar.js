@@ -1,4 +1,33 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Inicializar o efeito de fundo Vanta.js
+    VANTA.NET({
+        el: "#vanta-background",
+        mouseControls: true,
+        touchControls: true,
+        gyroControls: false,
+        minHeight: 200.00,
+        minWidth: 200.00,
+        scale: 1.00,
+        scaleMobile: 1.00,
+        color: 0x0000ff,
+        backgroundColor: 0x000000,
+        points: 20.00,
+        maxDistance: 30.00,
+        spacing: 15.00
+    });
+
+    // Implementar o cursor personalizado
+    const cursor = document.querySelector('.custom-cursor');
+    document.addEventListener('mousemove', (e) => {
+        cursor.style.left = `${e.clientX}px`;
+        cursor.style.top = `${e.clientY}px`;
+    });
+
+    document.querySelectorAll('a, button').forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+    });
+
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -29,11 +58,12 @@ function displayProductDetails(product) {
         <p class="text-lg text-gray-300 mb-4">${product.description}</p>
         <p class="text-md text-gray-400">Categoria: ${product.category || 'Não especificada'}</p>
     `;
+    gsap.from(productDetails, {duration: 0.5, opacity: 0, y: 20, ease: "power2.out"});
 }
 
 async function generateQRCode(product) {
     const qrCodeContainer = document.getElementById('qrCodeContainer');
-    qrCodeContainer.innerHTML = 'Gerando QR Code...';
+    qrCodeContainer.innerHTML = '<p class="text-blue-300">Gerando QR Code...</p>';
 
     try {
         const response = await fetch('/api/create_preference', {
@@ -55,26 +85,17 @@ async function generateQRCode(product) {
         }
 
         if (data.qr_code_data) {
-            qrCodeContainer.innerHTML = '';
-            const qrCodeImg = document.createElement('img');
-            qrCodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.qr_code_data)}`;
-            qrCodeImg.alt = 'QR Code de Pagamento';
-            qrCodeContainer.appendChild(qrCodeImg);
-
-            const instructionText = document.createElement('p');
-            instructionText.textContent = 'Escaneie este QR code com o aplicativo do Mercado Pago para realizar o pagamento.';
-            instructionText.className = 'mt-4 text-blue-300';
-            qrCodeContainer.appendChild(instructionText);
-
-            const pixCodeText = document.createElement('p');
-            pixCodeText.textContent = `Código PIX: ${data.qr_code_data}`;
-            pixCodeText.className = 'mt-2 text-sm text-gray-400';
-            qrCodeContainer.appendChild(pixCodeText);
+            qrCodeContainer.innerHTML = `
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.qr_code_data)}" alt="QR Code de Pagamento" class="mb-4">
+                <p class="text-blue-300 mb-2">Escaneie este QR code com o aplicativo do Mercado Pago para realizar o pagamento.</p>
+                <p class="text-sm text-gray-400 bg-gray-800 p-2 rounded">Código PIX: ${data.qr_code_data}</p>
+            `;
+            gsap.from(qrCodeContainer.children, {duration: 0.5, opacity: 0, y: 20, stagger: 0.1, ease: "power2.out"});
         } else {
-            qrCodeContainer.innerHTML = 'QR Code não disponível';
+            qrCodeContainer.innerHTML = '<p class="text-red-500">QR Code não disponível. Por favor, tente novamente.</p>';
         }
     } catch (error) {
         console.error('Erro:', error);
-        qrCodeContainer.innerHTML = `Erro ao gerar QR Code: ${error.message}`;
+        qrCodeContainer.innerHTML = `<p class="text-red-500">Erro ao gerar QR Code: ${error.message}</p>`;
     }
 }
