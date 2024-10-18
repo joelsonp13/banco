@@ -51,6 +51,15 @@ document.getElementById('buyButton').addEventListener('click', async () => {
             qrCodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.qr_code_url)}`;
             qrCodeImg.alt = 'QR Code de Pagamento';
             qrCodeContainer.appendChild(qrCodeImg);
+
+            // Adiciona um link para o pagamento
+            const paymentLink = document.createElement('a');
+            paymentLink.href = data.qr_code_url;
+            paymentLink.target = '_blank';
+            paymentLink.textContent = 'Abrir página de pagamento';
+            paymentLink.style.display = 'block';
+            paymentLink.style.marginTop = '10px';
+            qrCodeContainer.appendChild(paymentLink);
         } else {
             qrCodeContainer.innerHTML = 'QR Code não disponível';
         }
