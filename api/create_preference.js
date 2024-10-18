@@ -28,6 +28,14 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Dados inválidos' });
         }
 
+        // Função para formatar a data no formato correto
+        function formatDate(date) {
+            return date.toISOString().replace('Z', '-03:00');
+        }
+
+        const now = new Date();
+        const expirationDate = new Date(now.getTime() + 30 * 60000); // 30 minutos a partir de agora
+
         const preference = {
             items: [
                 {
@@ -45,8 +53,8 @@ module.exports = async (req, res) => {
             external_reference: "QR_CODE_PAYMENT",
             binary_mode: true,
             expires: true,
-            expiration_date_from: new Date().toISOString(),
-            expiration_date_to: new Date(Date.now() + 30 * 60000).toISOString(), // 30 minutos de validade
+            expiration_date_from: formatDate(now),
+            expiration_date_to: formatDate(expirationDate),
         };
 
         console.log('9. Criando preferência:', preference);
