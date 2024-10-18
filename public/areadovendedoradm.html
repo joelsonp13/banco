@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Área de Administração - Sublyme</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: #000;
+            color: #fff;
+        }
+        .neon-text {
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #0000ff, 0 0 35px #0000ff, 0 0 40px #0000ff;
+        }
+        .neon-border {
+            box-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #0000ff, 0 0 35px #0000ff, 0 0 40px #0000ff;
+        }
+        .admin-card {
+            background: rgba(0, 0, 20, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+        .admin-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(0, 0, 255, 0.5);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-gray-900">
+    <div id="vanta-background"></div>
+
+    <header class="bg-black bg-opacity-70 p-4 neon-border">
+        <nav class="container mx-auto flex justify-between items-center">
+            <h1 class="text-4xl font-bold neon-text">Sublyme - Administração</h1>
+            <div class="relative group">
+                <button class="text-blue-300 hover:text-blue-100 focus:outline-none">
+                    Menu
+                    <svg class="w-4 h-4 ml-1 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                <div class="absolute right-0 mt-2 w-48 bg-black bg-opacity-90 rounded-md shadow-lg hidden group-hover:block z-50">
+                    <a href="principal.html" class="block px-4 py-2 text-sm text-blue-300 hover:bg-blue-600 hover:text-white">Loja</a>
+                    <a href="perfil.html" class="block px-4 py-2 text-sm text-blue-300 hover:bg-blue-600 hover:text-white">Perfil</a>
+                    <a href="#" class="block px-4 py-2 text-sm text-blue-300 hover:bg-blue-600 hover:text-white">Sair</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-grow container mx-auto p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- Gerenciamento de Produtos -->
+        <div class="admin-card p-6">
+            <h2 class="text-2xl font-bold mb-4 neon-text">Gerenciamento de Produtos</h2>
+            
+            <div class="mt-4">
+                <a href="areadovendedor.html" class="block w-full text-center bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors duration-300">
+                    Ir para Área dos Produtos
+                </a>
+            </div>
+        </div>
+
+        <!-- Análises e Relatórios -->
+        <div class="admin-card p-6">
+            <h2 class="text-2xl font-bold mb-4 neon-text">Análises e Relatórios</h2>
+            <ul class="space-y-2">
+                <li><a href="#" class="text-blue-400 hover:text-blue-300">Visão Geral de Vendas</a></li>
+                <li><a href="#" class="text-blue-400 hover:text-blue-300">Relatórios de Receita</a></li>
+                <li><a href="#" class="text-blue-400 hover:text-blue-300">Análise de Desempenho de Produtos</a></li>
+            </ul>
+        </div>
+
+        <!-- Gerenciamento de Usuários -->
+        <div class="admin-card p-6">
+            <h2 class="text-2xl font-bold mb-4 neon-text">Gerenciamento de Usuários</h2>
+            <ul class="space-y-2">
+                <li><a href="#" class="text-blue-400 hover:text-blue-300">Visualizar Todos os Usuários</a></li>
+                <li><a href="#" class="text-blue-400 hover:text-blue-300">Gerenciar Permissões</a></li>
+                <li><a href="#" class="text-blue-400 hover:text-blue-300">Banir/Desbanir Usuários</a></li>
+            </ul>
+        </div>
+
+        <!-- Suporte ao Cliente -->
+        <div class="admin-card p-6">
+            <h2 class="text-2xl font-bold mb-4 neon-text">Suporte ao Cliente</h2>
+            <ul class="space-y-2">
+                <li><a href="#" class="text-blue-400 hover:text-blue-300">Chat ao Vivo</a></li>
+                <li><a href="#" class="text-blue-400 hover:text-blue-300">Gerenciar Tickets de Suporte</a></li>
+                <li><a href="#" class="text-blue-400 hover:text-blue-300">FAQ e Base de Conhecimento</a></li>
+            </ul>
+        </div>
+
+        <!-- Marketing e Promoções -->
+        <div class="admin-card p-6">
+            <h2 class="text-2xl font-bold mb-4 neon-text">Marketing e Promoções</h2>
+            <ul class="space-y-2">
+                <li><a href="#" class="text-blue-400 hover:text-blue-300">Criar Campanhas de Email</a></li>
+                <li><a href="#" class="text-blue-400 hover:text-blue-300">Gerenciar Anúncios</a></li>
+                <li><a href="#" class="text-blue-400 hover:text-blue-300">Promoções e Cupons</a></li>
+            </ul>
+        </div>
+
+        <!-- Configurações da Plataforma -->
+        <div class="admin-card p-6">
+            <h2 class="text-2xl font-bold mb-4 neon-text">Configurações da Plataforma</h2>
+            <ul class="space-y-2">
+                <li><a href="#" class="text-blue-400 hover:text-blue-300">Personalização da Interface</a></li>
+                <li><a href="#" class="text-blue-400 hover:text-blue-300">Configurações de Segurança</a></li>
+                <li><a href="#" class="text-blue-400 hover:text-blue-300">Gerenciamento de Pagamentos</a></li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="bg-black bg-opacity-70 p-6 mt-8 neon-border">
+        <p class="text-center text-blue-300">&copy; 2023 Sublyme. Painel de Administração.</p>
+    </footer>
+
+    <script src="firebase.js"></script>
+    <script src="areadovendedoradm.js"></script>
+</body>
+</html>

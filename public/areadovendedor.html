@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sublyme - Área do Vendedor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: #000;
+            color: #fff;
+        }
+        .neon-text {
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #0000ff, 0 0 35px #0000ff, 0 0 40px #0000ff;
+        }
+        .neon-border {
+            box-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #0000ff, 0 0 35px #0000ff, 0 0 40px #0000ff;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-gray-900">
+    <header class="bg-black bg-opacity-70 p-4 neon-border">
+        <nav class="container mx-auto flex justify-between items-center">
+            <h1 class="text-4xl font-bold neon-text">Sublyme - Área do Vendedor</h1>
+            <div class="relative group">
+                <button class="text-blue-300 hover:text-blue-100 focus:outline-none">
+                    Menu
+                    <svg class="w-4 h-4 ml-1 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                <div class="absolute right-0 mt-2 w-48 bg-black bg-opacity-90 rounded-md shadow-lg hidden group-hover:block z-50">
+                    <a href="principal.html" class="block px-4 py-2 text-sm text-blue-300 hover:bg-blue-600 hover:text-white">Loja</a>
+                    <a href="perfil.html" class="block px-4 py-2 text-sm text-blue-300 hover:bg-blue-600 hover:text-white">Perfil</a>
+                    <a href="#" class="block px-4 py-2 text-sm text-blue-300 hover:bg-blue-600 hover:text-white">Sair</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-grow container mx-auto p-8">
+        <h2 class="text-3xl font-bold mb-8 neon-text">Painel do Vendedor</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Formulário de criação/edição de produto -->
+            <div class="bg-gray-800 p-6 rounded-lg neon-border">
+                <h3 class="text-2xl font-bold mb-4 neon-text">Criar/Editar Produto</h3>
+                <form id="productForm" class="space-y-4">
+                    <div>
+                        <label for="productName" class="block text-sm font-medium text-gray-300">Nome do Produto</label>
+                        <input type="text" id="productName" name="productName" required class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    </div>
+                    <div>
+                        <label for="productDescription" class="block text-sm font-medium text-gray-300">Descrição</label>
+                        <textarea id="productDescription" name="productDescription" rows="3" required class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50"></textarea>
+                    </div>
+                    <div>
+                        <label for="productPrice" class="block text-sm font-medium text-gray-300">Preço (R$)</label>
+                        <input type="number" id="productPrice" name="productPrice" step="0.01" required class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    </div>
+                    <div id="discountSection" class="hidden">
+                        <label for="discountPercentage" class="block text-sm font-medium text-gray-300">Desconto (%)</label>
+                        <div class="flex items-center">
+                            <input type="number" id="discountPercentage" name="discountPercentage" min="0" max="100" class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                            <button type="button" id="applyDiscountBtn" class="ml-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Aplicar</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="productCategory" class="block text-sm font-medium text-gray-300">Categoria</label>
+                        <select id="productCategory" name="productCategory" required class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                            <option value="">Selecione uma categoria</option>
+                            <option value="hack">Hack</option>
+                            <option value="cheat">Cheat</option>
+                            <option value="programas">Programas</option>
+                            <option value="outros">Outros</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="productImage" class="block text-sm font-medium text-gray-300">Imagem do Produto</label>
+                        <input type="file" id="productImage" name="productImage" accept="image/*" class="mt-1 block w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+                        <img id="imagePreview" src="" alt="Preview" class="mt-2 max-w-full h-auto hidden">
+                    </div>
+                    <div>
+                        <button type="submit" id="submitBtn" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Criar Produto</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Lista de produtos -->
+            <div class="bg-gray-800 p-6 rounded-lg neon-border">
+                <h3 class="text-2xl font-bold mb-4 neon-text">Produtos Existentes</h3>
+                <ul id="productList" class="space-y-4">
+                    <!-- Os produtos serão inseridos aqui dinamicamente -->
+                </ul>
+                <div id="pagination" class="mt-4 flex justify-center space-x-2">
+                    <!-- Botões de paginação serão inseridos aqui dinamicamente -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-black bg-opacity-70 p-6 mt-8 neon-border">
+        <p class="text-center text-blue-300">&copy; 2023 Sublyme. Área restrita para vendedores.</p>
+    </footer>
+
+    <script src="firebase.js"></script>
+    <script src="areadovendedor.js"></script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - Sublyme</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: #000;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .neon-text {
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #0000ff, 0 0 35px #0000ff, 0 0 40px #0000ff;
+        }
+        .neon-border {
+            box-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #0000ff, 0 0 35px #0000ff, 0 0 40px #0000ff;
+        }
+        #chat-tabs {
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: thin;
+            scrollbar-color: #0000ff #000;
+        }
+        #chat-tabs::-webkit-scrollbar {
+            height: 6px;
+        }
+        #chat-tabs::-webkit-scrollbar-track {
+            background: #000;
+        }
+        #chat-tabs::-webkit-scrollbar-thumb {
+            background-color: #0000ff;
+            border-radius: 3px;
+        }
+        .chat-tab {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 50, 0.3);
+            border-radius: 1rem 1rem 0 0;
+            margin-right: 0.25rem;
+            transition: all 0.3s ease;
+        }
+        .chat-tab.active {
+            background: rgba(0, 0, 255, 0.3);
+        }
+        .chat-tab:hover {
+            background: rgba(0, 0, 255, 0.2);
+        }
+        .close-tab {
+            margin-left: 0.5rem;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+        .close-tab:hover {
+            opacity: 1;
+        }
+        #chat-container {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        #users-list {
+            overflow-y: auto;
+            max-height: calc(100vh - 200px);
+        }
+        #chat-messages {
+            overflow-y: auto;
+            max-height: calc(100vh - 250px);
+        }
+        .custom-cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #0000ff;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: all 0.1s ease;
+            mix-blend-mode: difference;
+        }
+        .custom-cursor.interactive {
+            width: 30px;
+            height: 30px;
+            background-color: rgba(0, 255, 0, 0.5);
+            border: none;
+        }
+        * {
+            cursor: none !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white h-screen flex flex-col overflow-hidden">
+    <div class="custom-cursor"></div>
+    <div id="vanta-background" class="fixed inset-0 z-0"></div>
+    <div class="absolute inset-0 bg-gradient-to-br from-blue-900 via-black to-blue-900 opacity-40 z-0"></div>
+
+    <header class="relative z-20 bg-black bg-opacity-70 p-4 neon-border">
+        <nav class="container mx-auto flex justify-between items-center">
+            <h1 class="text-4xl font-bold neon-text">Sublyme Chat</h1>
+            <div id="user-info" class="text-white">
+                <span id="user-name" class="font-bold mr-4"></span>
+                <a href="principal.html" class="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition-all duration-300 neon-border">Voltar à Loja</a>
+            </div>
+        </nav>
+    </header>
+
+    <div id="chat-container" class="flex flex-grow relative z-10 container mx-auto my-4 bg-black bg-opacity-70 rounded-lg overflow-hidden neon-border">
+        <!-- Lista de usuários e botão de chat geral -->
+        <div class="w-64 bg-gray-800 bg-opacity-50 flex flex-col">
+            <button id="general-chat-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-t transition-all duration-300 flex justify-between items-center">
+                <span>Chat Geral</span>
+                <span class="unread-count hidden bg-red-500 text-white rounded-full px-2 py-1 text-xs">0</span>
+            </button>
+            <div id="users-list" class="flex-grow p-4 overflow-y-auto">
+                <h2 class="text-xl font-bold mb-4 neon-text">Usuários</h2>
+                <!-- A lista de usuários será inserida aqui dinamicamente -->
+            </div>
+        </div>
+
+        <!-- Chat geral e chats privados -->
+        <div class="flex-grow flex flex-col">
+            <!-- Abas de chat -->
+            <div id="chat-tabs" class="flex bg-gray-700 bg-opacity-50 p-2 overflow-x-auto">
+                <!-- As abas de chat serão inseridas aqui dinamicamente -->
+            </div>
+
+            <!-- Área de mensagens -->
+            <div id="chat-messages" class="flex-grow overflow-y-auto p-4 space-y-3">
+                <!-- As mensagens serão inseridas aqui dinamicamente -->
+            </div>
+
+            <!-- Área de input -->
+            <div class="p-4 border-t border-gray-700">
+                <div class="flex items-center">
+                    <input id="chat-input" type="text" class="flex-grow bg-gray-800 text-white px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300" placeholder="Digite sua mensagem...">
+                    <button id="record-audio" class="ml-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-2 focus:outline-none transition-all duration-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                        </svg>
+                    </button>
+                    <button id="cancel-audio" class="hidden ml-2 bg-gray-500 hover:bg-gray-600 text-white rounded-full p-2 focus:outline-none transition-all duration-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+    <script src="firebase.js"></script>
+    <script src="chat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+</body>
+</html>

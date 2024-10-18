@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sublyme - Perfil do Usuário</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" href="data:,">
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <!-- Remova ou comente a linha abaixo se ela existir -->
+    <!-- <script src="particles.js"></script> -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background: #000;
+            color: #fff;
+            cursor: none;
+        }
+        .custom-cursor {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #0000ff;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transition: all 0.1s ease;
+            mix-blend-mode: difference;
+        }
+        .custom-cursor.interactive {
+            width: 30px;
+            height: 30px;
+            background-color: rgba(0, 255, 0, 0.5);
+            border: none;
+        }
+        * {
+            cursor: none !important;
+        }
+        .neon-text {
+            text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #0000ff, 0 0 35px #0000ff, 0 0 40px #0000ff;
+        }
+        .neon-border {
+            box-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #0000ff, 0 0 35px #0000ff, 0 0 40px #0000ff;
+        }
+        .profile-pic-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 20px;
+            overflow: hidden;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid #0000ff;
+            box-shadow: 0 0 15px #0000ff;
+        }
+        .profile-pic {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .change-pic-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(0, 0, 255, 0.7);
+            overflow: hidden;
+            width: 100%;
+            height: 0;
+            transition: .5s ease;
+        }
+        .profile-pic-container:hover .change-pic-overlay {
+            height: 100%;
+        }
+        .change-pic-text {
+            color: white;
+            font-size: 20px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .user-info-container {
+            background: rgba(0, 0, 50, 0.3);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .user-info-container:hover {
+            box-shadow: 0 0 30px rgba(0, 0, 255, 0.7);
+        }
+        .user-info-container h3,
+        .user-info-container p,
+        .user-info-container button {
+            transition: transform 0.3s ease;
+        }
+        .user-info-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 10px;
+            background-color: rgba(0, 0, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .user-info-item:hover {
+            background-color: rgba(0, 0, 255, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .level-up-message {
+            animation: neon-pulse 1.5s infinite alternate;
+        }
+
+        @keyframes neon-pulse {
+            from {
+                box-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #0000ff, 0 0 35px #0000ff, 0 0 40px #0000ff;
+            }
+            to {
+                box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #0000ff, 0 0 70px #0000ff, 0 0 80px #0000ff;
+            }
+        }
+
+        .glitch {
+            position: relative;
+        }
+
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .glitch::before {
+            left: 2px;
+            text-shadow: -2px 0 #ff00c1;
+            clip: rect(24px, 550px, 90px, 0);
+            animation: glitch-anim-2 3s infinite linear alternate-reverse;
+        }
+
+        .glitch::after {
+            left: -2px;
+            text-shadow: -2px 0 #00fff9, 2px 2px #ff00c1;
+            animation: glitch-anim 2.5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(42px, 9999px, 44px, 0); }
+            5% { clip: rect(12px, 9999px, 59px, 0); }
+            10% { clip: rect(48px, 9999px, 29px, 0); }
+            15% { clip: rect(42px, 9999px, 73px, 0); }
+            20% { clip: rect(63px, 9999px, 27px, 0); }
+            25% { clip: rect(34px, 9999px, 55px, 0); }
+            30% { clip: rect(86px, 9999px, 73px, 0); }
+            35% { clip: rect(20px, 9999px, 20px, 0); }
+            40% { clip: rect(26px, 9999px, 60px, 0); }
+            45% { clip: rect(25px, 9999px, 66px, 0); }
+            50% { clip: rect(57px, 9999px, 98px, 0); }
+            55% { clip: rect(5px, 9999px, 46px, 0); }
+            60% { clip: rect(82px, 9999px, 31px, 0); }
+            65% { clip: rect(54px, 9999px, 27px, 0); }
+            70% { clip: rect(28px, 9999px, 99px, 0); }
+            75% { clip: rect(45px, 9999px, 69px, 0); }
+            80% { clip: rect(23px, 9999px, 85px, 0); }
+            85% { clip: rect(54px, 9999px, 84px, 0); }
+            90% { clip: rect(45px, 9999px, 47px, 0); }
+            95% { clip: rect(37px, 9999px, 20px, 0); }
+            100% { clip: rect(4px, 9999px, 91px, 0); }
+        }
+
+        @keyframes glitch-anim-2 {
+            0% { clip: rect(65px, 9999px, 100px, 0); }
+            5% { clip: rect(52px, 9999px, 74px, 0); }
+            10% { clip: rect(79px, 9999px, 85px, 0); }
+            15% { clip: rect(75px, 9999px, 5px, 0); }
+            20% { clip: rect(67px, 9999px, 61px, 0); }
+            25% { clip: rect(14px, 9999px, 79px, 0); }
+            30% { clip: rect(1px, 9999px, 66px, 0); }
+            35% { clip: rect(86px, 9999px, 30px, 0); }
+            40% { clip: rect(23px, 9999px, 98px, 0); }
+            45% { clip: rect(85px, 9999px, 72px, 0); }
+            50% { clip: rect(71px, 9999px, 75px, 0); }
+            55% { clip: rect(2px, 9999px, 48px, 0); }
+            60% { clip: rect(30px, 9999px, 16px, 0); }
+            65% { clip: rect(59px, 9999px, 50px, 0); }
+            70% { clip: rect(41px, 9999px, 62px, 0); }
+            75% { clip: rect(2px, 9999px, 82px, 0); }
+            80% { clip: rect(47px, 9999px, 73px, 0); }
+            85% { clip: rect(3px, 9999px, 27px, 0); }
+            90% { clip: rect(26px, 9999px, 55px, 0); }
+            95% { clip: rect(42px, 9999px, 97px, 0); }
+            100% { clip: rect(38px, 9999px, 49px, 0); }
+        }
+
+        .icon-button {
+            background: none;
+            border: none;
+            color: #0000ff;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.3s ease;
+        }
+        .icon-button:hover {
+            color: #00ffff;
+        }
+
+        .custom-message {
+            font-family: 'Orbitron', sans-serif;
+            animation: neon-pulse 1.5s infinite alternate;
+        }
+
+        @keyframes neon-pulse {
+            from {
+                box-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #0000ff, 0 0 35px #0000ff, 0 0 40px #0000ff;
+            }
+            to {
+                box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff, 0 0 40px #0000ff, 0 0 70px #0000ff, 0 0 80px #0000ff;
+            }
+        }
+
+        .neon-button {
+            font-family: 'Orbitron', sans-serif;
+            display: inline-block;
+            cursor: pointer;
+            text-decoration: none;
+            color: var(--clr-neon);
+            border: var(--clr-neon) 0.125em solid;
+            padding: 0.25em 1em;
+            border-radius: 0.25em;
+            text-shadow: 0 0 0.125em hsl(0 0% 100% / 0.3), 0 0 0.45em currentColor;
+            box-shadow: inset 0 0 0.5em 0 var(--clr-neon), 0 0 0.5em 0 var(--clr-neon);
+            position: relative;
+            transition: background-color 100ms linear;
+        }
+
+        .neon-button::before {
+            pointer-events: none;
+            content: "";
+            position: absolute;
+            background: var(--clr-neon);
+            top: 120%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: perspective(1em) rotateX(40deg) scale(1, 0.35);
+            filter: blur(1em);
+            opacity: 0.7;
+        }
+
+        .neon-button::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            box-shadow: 0 0 2em 0.5em var(--clr-neon);
+            opacity: 0;
+            background-color: var(--clr-neon);
+            z-index: -1;
+            transition: opacity 100ms linear;
+        }
+
+        .neon-button:hover,
+        .neon-button:focus {
+            color: var(--clr-bg);
+            text-shadow: none;
+        }
+
+        .neon-button:hover::before,
+        .neon-button:focus::before {
+            opacity: 1;
+        }
+        .neon-button:hover::after,
+        .neon-button:focus::after {
+            opacity: 1;
+        }
+
+        .neon-button-blue {
+            --clr-neon: #0000ff;
+            --clr-bg: #ffffff;
+        }
+
+        .neon-button-red {
+            --clr-neon: #ff0000;
+            --clr-bg: #ffffff;
+        }
+
+        .effect-3d {
+            transform: perspective(1000px) rotateY(15deg);
+            transition: transform 0.3s ease;
+        }
+        .effect-3d:hover {
+            transform: perspective(1000px) rotateY(-15deg);
+        }
+
+        .effect-glow {
+            animation: glow 1.5s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #0ff, 0 0 20px #0ff, 0 0 35px #0ff, 0 0 40px #0ff, 0 0 50px #0ff;
+            }
+            to {
+                box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #0ff, 0 0 40px #0ff, 0 0 70px #0ff, 0 0 80px #0ff, 0 0 100px #0ff;
+            }
+        }
+
+        .effect-shake {
+            animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both infinite;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .effect-flip {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .effect-flip:hover {
+            transform: rotateY(180deg);
+        }
+
+       input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: rgba(0, 0, 255, 0.3);
+            outline: none;
+            border-radius: 15px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #0000ff;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #0000ff;
+            cursor: pointer;
+            border-radius: 50%;
+        }
+
+        #soundControl {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        #soundToggleBtn {
+            font-size: 1.5rem;
+            margin-right: 8px;
+        }
+
+        #volumeControl {
+            width: 100px;
+        }
+
+        .effect-pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .effect-rainbow {
+            animation: rainbow 5s linear infinite;
+        }
+
+        @keyframes rainbow {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        .effect-particle {
+            position: relative;
+            overflow: hidden;
+        }
+
+        #musicVisualizer {
+            width: 100%;
+            height: 100px;
+            margin-top: 20px;
+        }
+        
+        
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <div class="custom-cursor"></div>
+    <div id="particles-js" class="fixed top-0 left-0 w-full h-full z-0"></div>
+    <div id="soundControl" class="fixed top-4 left-4 z-50 flex items-center space-x-2">
+        <button id="soundToggleBtn" class="text-blue-300 hover:text-blue-100 transition duration-300">
+            <i class="fas fa-volume-up"></i>
+        </button>
+        <input type="range" id="volumeControl" min="0" max="100" value="100" class="w-24 accent-blue-500">
+    </div>
+    <div class="relative z-10 flex flex-col min-h-screen">
+        <header class="bg-black bg-opacity-70 p-4 neon-border">
+            <nav class="container mx-auto flex justify-between items-center">
+                <h1 class="text-4xl font-bold neon-text">Sublyme - Perfil do Usuário</h1>
+                <div class="relative group">
+                    <button class="text-blue-300 hover:text-blue-100 focus:outline-none">
+                        Menu
+                        <svg class="w-4 h-4 ml-1 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div class="absolute right-0 mt-2 w-48 bg-black bg-opacity-90 rounded-md shadow-lg hidden group-hover:block z-50">
+                        <a href="principal.html" class="block px-4 py-2 text-sm text-blue-300 hover:bg-blue-600 hover:text-white">Loja</a>
+                        <a href="perfil.html" class="block px-4 py-2 text-sm text-blue-300 hover:bg-blue-600 hover:text-white">Perfil</a>
+                        <a href="#" id="logoutBtn" class="block px-4 py-2 text-sm text-blue-300 hover:bg-blue-600 hover:text-white">Sair</a>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <main class="flex-grow container mx-auto p-8">
+            <div class="-70 p-10 rounded-lg  ">
+                <div class="profile-pic-container" id="profilePicContainer">
+                    <img src="path/to/default-profile-pic.jpg" alt="Foto de Perfil" class="profile-pic" id="profilePic">
+                    <div class="change-pic-overlay">
+                        <div class="change-pic-text">Mudar Foto</div>
+                    </div>
+                </div>
+                <div id="musicVisualizerContainer" class="relative">
+                    <div id="userInfo" class="user-info-container space-y-4 effect-particle relative z-10">
+                        <!-- As informações do usuário serão inseridas aqui dinamicamente -->
+                    </div>
+                </div>
+                <input type="file" id="profilePicInput" accept="image/*" style="display: none;">
+                <button id="customizeBtn" class="mt-6 neon-button neon-button-blue">Personalizar Perfil</button>
+            </div>
+        </main>
+
+        <footer class="bg-black bg-opacity-70 p-6 mt-8 neon-border">
+            <p class="text-center text-blue-300">&copy; 2023 Sublyme. Elevando seu jogo ao próximo nível.</p>
+        </footer>
+    </div>
+
+<!-- ... (código anterior) ... -->
+
+<div id="customizeModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 overflow-y-auto">
+    <div class="bg-gray-900 p-8 rounded-lg neon-border w-full max-w-3xl max-h-screen overflow-y-auto">
+        <h2 class="text-3xl font-bold mb-6 neon-text text-center">Personalizar Perfil</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Coluna da esquerda -->
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-blue-300">Aparência Geral</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="bgColor" class="block text-sm font-medium text-gray-300 mb-1">Cor de Fundo</label>
+                        <input type="color" id="bgColor" class="w-full h-10 rounded cursor-pointer">
+                    </div>
+                    <div>
+                        <label for="textColor" class="block text-sm font-medium text-gray-300 mb-1">Cor do Texto</label>
+                        <input type="color" id="textColor" class="w-full h-10 rounded cursor-pointer">
+                    </div>
+                    <div>
+                        <label for="profileEffect" class="block text-sm font-medium text-gray-300 mb-1">Efeito do Perfil</label>
+                        <select id="profileEffect" class="w-full bg-gray-800 border border-gray-700 text-white rounded-md p-2">
+                            <option value="none">Nenhum</option>
+                            <option value="scale">Escala</option>
+                            <option value="rotate">Rotação</option>
+                            <option value="3d">Efeito 3D</option>
+                          
+                        </select>
+                    </div>
+                </div>
+
+                <h3 class="text-xl font-semibold mb-4 mt-8 text-blue-300">Música de Fundo</h3>
+                <div>
+                    <label for="backgroundMusic" class="block text-sm font-medium text-gray-300 mb-1">Selecionar Música</label>
+                    <input type="file" id="backgroundMusic" accept="audio/*" class="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+                </div>
+            </div>
+
+            <!-- Coluna da direita -->
+            <div>
+                <h3 class="text-xl font-semibold mb-4 text-blue-300">Configurações de Partículas</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="particleType" class="block text-sm font-medium text-gray-300 mb-1">Tipo de Partícula</label>
+                        <select id="particleType" class="w-full bg-gray-800 border border-gray-700 text-white rounded-md p-2">
+                            <option value="color">Cor Sólida</option>
+                            <option value="image">Imagem</option>
+                        </select>
+                    </div>
+                    <div id="particleColorControl">
+                        <label for="particleColor" class="block text-sm font-medium text-gray-300 mb-1">Cor das Partículas</label>
+                        <input type="color" id="particleColor" class="w-full h-10 rounded cursor-pointer" value="#ffffff">
+                    </div>
+                    <div id="particleImageControl" class="hidden">
+                        <label for="particleImage" class="block text-sm font-medium text-gray-300 mb-1">Imagem das Partículas</label>
+                        <input type="file" id="particleImage" accept="image/*" class="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+                    </div>
+                    <div>
+                        <label for="particleCount" class="block text-sm font-medium text-gray-300 mb-1">Quantidade de Partículas</label>
+                        <input type="range" id="particleCount" min="0" max="500" value="200" class="w-full">
+                    </div>
+                    <div>
+                        <label for="particleSize" class="block text-sm font-medium text-gray-300 mb-1">Tamanho das Partículas</label>
+                        <input type="range" id="particleSize" min="1" max="20" value="3" class="w-full">
+                    </div>
+                    <div>
+                        <label for="particleDirection" class="block text-sm font-medium text-gray-300 mb-1">Direção das Partículas</label>
+                        <select id="particleDirection" class="w-full bg-gray-800 border border-gray-700 text-white rounded-md p-2">
+                            <option value="none">Padrão</option>
+                            <option value="rain">Chuva</option>
+                            <option value="ember">Brasa</option>
+                            <option value="snow">Neve</option>
+                        </select>
+                    </div>
+                </div>
+
+                <h3 class="text-xl font-semibold mb-4 mt-8 text-blue-300">Tipo de Fundo</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="backgroundType" class="block text-sm font-medium text-gray-300 mb-1">Selecionar Tipo</label>
+                        <select id="backgroundType" class="w-full bg-gray-800 border border-gray-700 text-white rounded-md p-2">
+                            <option value="vanta">Vanta 3D (Padrão)</option>
+                            <option value="image">Imagem</option>
+                            <option value="color">Cor Sólida</option>
+                            <option value="gradient">Gradiente</option>
+                        </select>
+                    </div>
+                    <div id="backgroundImageControl" class="hidden">
+                        <label for="backgroundImage" class="block text-sm font-medium text-gray-300 mb-1">Imagem de Fundo</label>
+                        <input type="file" id="backgroundImage" accept="image/*" class="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+                    </div>
+                    <div id="backgroundColorControl" class="hidden">
+                        <label for="backgroundColor" class="block text-sm font-medium text-gray-300 mb-1">Cor de Fundo</label>
+                        <input type="color" id="backgroundColor" class="w-full h-10 rounded cursor-pointer">
+                    </div>
+                    <div id="backgroundGradientControl" class="hidden">
+                        <label for="gradientColor1" class="block text-sm font-medium text-gray-300 mb-1">Cor 1 do Gradiente</label>
+                        <input type="color" id="gradientColor1" class="w-full h-10 rounded cursor-pointer">
+                        <label for="gradientColor2" class="block text-sm font-medium text-gray-300 mt-2 mb-1">Cor 2 do Gradiente</label>
+                        <input type="color" id="gradientColor2" class="w-full h-10 rounded cursor-pointer">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end space-x-4 mt-8">
+            <button id="closeModalBtn" class="neon-button neon-button-red px-6 py-2">Cancelar</button>
+            <button id="saveCustomizationBtn" class="neon-button neon-button-blue px-6 py-2">Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- ... (código posterior) ... -->
+
+    <script src="firebase.js"></script>
+    <script src="perfil.js"></script>
+    <script src="personalizarperfil.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            particlesJS.load('particles-js', 'particles.json', function() {
+                console.log('particles.js carregado - callback');
+            });
+        });
+
+        function copyToClipboard(button) {
+            const input = button.previousElementSibling;
+            input.select();
+            document.execCommand('copy');
+            button.textContent = 'Copiado!';
+            setTimeout(() => {
+                button.textContent = 'Copiar Link';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
