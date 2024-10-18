@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
         console.log('Resposta do Mercado Pago:', response.body);
 
         // Gerar o link para o QR code
-        const qrCodeUrl = `https://www.mercadopago.com.br/qr/${response.body.id}`;
+        const qrCodeUrl = response.body.init_point;
 
         res.json({ 
             id: response.body.id,

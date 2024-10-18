@@ -1,3 +1,13 @@
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const response = await fetch('/api/get_public_key');
+        const data = await response.json();
+        window.mercadoPagoPublicKey = data.publicKey;
+    } catch (error) {
+        console.error('Erro ao obter a chave pública:', error);
+    }
+});
+
 document.getElementById('buyButton').addEventListener('click', async () => {
     try {
         const price = parseFloat(document.getElementById('productPrice').value);
