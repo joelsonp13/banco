@@ -28,12 +28,17 @@ document.getElementById('buyButton').addEventListener('click', async () => {
 
         const data = await response.json();
 
-        // Exibir o link de pagamento
+        // Gerar QR code
+        const qr = qrcode(0, 'L');
+        qr.addData(data.init_point);
+        qr.make();
+
+        // Exibir o QR code
         const qrCodeContainer = document.getElementById('qrCodeContainer');
-        qrCodeContainer.innerHTML = `<a href="${data.init_point}" target="_blank">Clique aqui para pagar</a>`;
+        qrCodeContainer.innerHTML = qr.createImgTag(5);
 
     } catch (error) {
         console.error('Erro ao criar preferência:', error);
-        alert(`Ocorreu um erro ao gerar o link de pagamento. Por favor, tente novamente. Detalhes: ${error.message}`);
+        alert(`Ocorreu um erro ao gerar o QR Code. Por favor, tente novamente. Detalhes: ${error.message}`);
     }
 });
