@@ -39,18 +39,9 @@ module.exports = async (req, res) => {
         const response = await mercadopago.preferences.create(preference);
         console.log('Resposta do Mercado Pago:', response.body);
 
-        // Gerar QR Code
-        const qrCode = await mercadopago.qr.create({
-            file_type: "image/png",
-            size: 500,
-            preference_id: response.body.id
-        });
-
-        console.log('QR Code gerado:', qrCode);
-
         res.json({ 
             id: response.body.id,
-            qr_code: qrCode.response.qr_data
+            init_point: response.body.init_point
         });
     } catch (error) {
         console.error('Erro detalhado:', error);
