@@ -36,12 +36,9 @@ document.getElementById('buyButton').addEventListener('click', async () => {
 
         const data = await response.json();
 
-        // Gerar e exibir o QR code
+        // Exibir o QR code
         const qrCodeContainer = document.getElementById('qrCodeContainer');
-        const qr = qrcode(0, 'L');
-        qr.addData(data.qr_code);
-        qr.make();
-        qrCodeContainer.innerHTML = qr.createImgTag(5);
+        qrCodeContainer.innerHTML = `<img src="data:image/png;base64,${data.qr_code_base64}" alt="QR Code">`;
 
         // Adicionar link abaixo do QR code
         const linkElement = document.createElement('p');
