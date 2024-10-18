@@ -41,7 +41,7 @@ document.getElementById('buyButton').addEventListener('click', async () => {
             return;
         }
 
-        console.log('Enviando requisição para criar preferência...');
+        console.log('Enviando requisição para criar QR code de pagamento...');
         const response = await fetch('/api/create_preference', {
             method: 'POST',
             headers: {
@@ -56,7 +56,7 @@ document.getElementById('buyButton').addEventListener('click', async () => {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`Erro ao criar preferência: ${errorData.error}\nDetalhes: ${errorData.details}`);
+            throw new Error(`Erro ao criar QR code de pagamento: ${errorData.error}\nDetalhes: ${errorData.details}`);
         }
 
         const data = await response.json();
@@ -68,32 +68,12 @@ document.getElementById('buyButton').addEventListener('click', async () => {
             console.log('QR Code base64 recebido, exibindo imagem...');
             const qrCodeImg = document.createElement('img');
             qrCodeImg.src = `data:image/png;base64,${data.qr_code_base64}`;
-            qrCodeImg.alt = 'QR Code';
+            qrCodeImg.alt = 'QR Code de Pagamento';
             qrCodeContainer.appendChild(qrCodeImg);
-        } else if (data.qr_code) {
-            console.log('QR Code string recebido, gerando imagem...');
-            const qr = qrcode(0, 'L');
-            qr.addData(data.qr_code);
-            qr.make();
-            qrCodeContainer.innerHTML = qr.createImgTag(5);
         } else {
             console.log('Nenhum QR Code recebido');
             qrCodeContainer.innerHTML = 'QR Code não disponível';
         }
-
-        // Adicionar link de pagamento
-        if (data.init_point) {
-            const linkElement = document.createElement('p');
-            linkElement.innerHTML = `<a href="${data.init_point}" target="_blank">Abrir link do pagamento</a>`;
-            qrCodeContainer.appendChild(linkElement);
-        } else {
-            console.log('Link de pagamento não disponível');
-        }
-
-        // Remova esta parte para não exibir a resposta completa na página
-        // const responseElement = document.createElement('pre');
-        // responseElement.textContent = JSON.stringify(data.full_response, null, 2);
-        // qrCodeContainer.appendChild(responseElement);
 
     } catch (error) {
         console.error('Erro:', error);
