@@ -3,12 +3,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         const response = await fetch('/api/get_public_key');
         const data = await response.json();
         window.mercadoPagoPublicKey = data.publicKey;
+        console.log('Chave pública do Mercado Pago obtida com sucesso');
     } catch (error) {
         console.error('Erro ao obter a chave pública:', error);
     }
 });
 
 document.getElementById('buyButton').addEventListener('click', async () => {
+    const qrCodeContainer = document.getElementById('qrCodeContainer');
+    qrCodeContainer.innerHTML = 'Gerando QR Code...';
+
     try {
         const price = parseFloat(document.getElementById('productPrice').value);
         
@@ -17,6 +21,7 @@ document.getElementById('buyButton').addEventListener('click', async () => {
             return;
         }
 
+        console.log('Enviando requisição para criar preferência...');
         const response = await fetch('/api/create_preference', {
             method: 'POST',
             headers: {
@@ -37,27 +42,33 @@ document.getElementById('buyButton').addEventListener('click', async () => {
         const data = await response.json();
         console.log('Resposta do servidor:', data);
 
-        const qrCodeContainer = document.getElementById('qrCodeContainer');
         qrCodeContainer.innerHTML = '';
 
         if (data.qr_code_base64) {
-            // Exibir o QR code se disponível
+            console.log('QR Code base64 recebido, exibindo imagem...');
             qrCodeContainer.innerHTML = `<img src="data:image/png;base64,${data.qr_code_base64}" alt="QR Code">`;
         } else if (data.qr_code) {
-            // Se não tiver o QR code em base64, mas tiver o código QR, gerar a imagem
+            console.log('QR Code string recebido, gerando imagem...');
             const qr = qrcode(0, 'L');
             qr.addData(data.qr_code);
             qr.make();
             qrCodeContainer.innerHTML = qr.createImgTag(5);
+        } else {
+            console.log('Nenhum QR Code recebido');
+            qrCodeContainer.innerHTML = 'QR Code não disponível';
         }
 
         // Adicionar link de pagamento
-        const linkElement = document.createElement('p');
-        linkElement.innerHTML = `<a href="${data.init_point}" target="_blank">Abrir link do pagamento</a>`;
-        qrCodeContainer.appendChild(linkElement);
+        if (data.init_point) {
+            const linkElement = document.createElement('p');
+            linkElement.innerHTML = `<a href="${data.init_point}" target="_blank">Abrir link do pagamento</a>`;
+            qrCodeContainer.appendChild(linkElement);
+        } else {
+            console.log('Link de pagamento não disponível');
+        }
 
     } catch (error) {
         console.error('Erro:', error);
-        alert(`Ocorreu um erro. Por favor, tente novamente.\n\nDetalhes: ${error.message}`);
+        qrCodeContainer.innerHTML = `Erro ao gerar QR Code: ${error.message}`;
     }
 });
