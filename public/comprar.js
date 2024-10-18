@@ -18,7 +18,7 @@ function displayProductDetails(product) {
     const productDetails = document.getElementById('productDetails');
     productDetails.innerHTML = `
         <h2 class="text-3xl font-bold text-blue-400 mb-4">${product.name}</h2>
-        <img src="${product.imageUrl}" alt="${product.name}" class="w-full max-w-md mx-auto mb-4 rounded-lg">
+        <img src="${product.image}" alt="${product.name}" class="w-full max-w-md mx-auto mb-4 rounded-lg">
         <p class="text-2xl font-bold text-green-500 mb-2">R$ ${product.currentPrice.toFixed(2)}</p>
         <p class="text-lg text-gray-300 mb-4">${product.description}</p>
         <p class="text-md text-gray-400">Categoria: ${product.category}</p>
