@@ -1,7 +1,10 @@
 const mercadopago = require('mercadopago');
 
 module.exports = async (req, res) => {
+    console.log('Recebida requisição para criar preferência');
+
     if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
+        console.error('Token de acesso do Mercado Pago não configurado');
         return res.status(500).json({ error: 'Configuração do servidor incompleta' });
     }
 
@@ -12,7 +15,10 @@ module.exports = async (req, res) => {
     try {
         const { title, price, quantity } = req.body;
 
+        console.log('Dados recebidos:', { title, price, quantity });
+
         if (!title || typeof price !== 'number' || price <= 0 || !Number.isInteger(quantity) || quantity <= 0) {
+            console.error('Dados inválidos recebidos');
             return res.status(400).json({ error: 'Dados inválidos' });
         }
 
@@ -34,14 +40,18 @@ module.exports = async (req, res) => {
             binary_mode: true
         };
 
+        console.log('Criando preferência:', preference);
+
         const response = await mercadopago.preferences.create(preference);
+
+        console.log('Resposta do Mercado Pago:', response.body);
 
         res.json({ 
             id: response.body.id,
             init_point: response.body.init_point
         });
     } catch (error) {
-        console.error('Erro:', error);
+        console.error('Erro ao criar preferência:', error);
         res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
