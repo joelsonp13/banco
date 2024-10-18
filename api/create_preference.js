@@ -42,11 +42,19 @@ module.exports = async (req, res) => {
 
         console.log('Criando preferência:', preference);
 
+        if (!mercadopago.preferences || typeof mercadopago.preferences.create !== 'function') {
+            throw new Error('Método mercadopago.preferences.create não está disponível');
+        }
+
         const response = await mercadopago.preferences.create(preference);
 
         console.log('Resposta do Mercado Pago:', response.body);
 
         // Gerar o QR code
+        if (!mercadopago.qr || typeof mercadopago.qr.create !== 'function') {
+            throw new Error('Método mercadopago.qr.create não está disponível');
+        }
+
         const qrCode = await mercadopago.qr.create({
             file_type: "image/png",
             size: 500,
