@@ -43,7 +43,10 @@ module.exports = async (req, res) => {
                 installments: 1
             },
             external_reference: "QR_CODE_PAYMENT",
-            binary_mode: true
+            binary_mode: true,
+            expires: true,
+            expiration_date_from: new Date().toISOString(),
+            expiration_date_to: new Date(Date.now() + 30 * 60000).toISOString(), // 30 minutos de validade
         };
 
         console.log('9. Criando preferência:', preference);
@@ -54,7 +57,7 @@ module.exports = async (req, res) => {
         console.log('11. Resposta do Mercado Pago:', JSON.stringify(response.body, null, 2));
 
         console.log('12. Gerando QR code para pagamento');
-        const qrCodeData = response.body.init_point;
+        const qrCodeData = `https://www.mercadopago.com.br/qr/${response.body.id}`;
         const qrCodeBase64 = await qrcode.toDataURL(qrCodeData);
 
         console.log('13. QR code gerado com sucesso');
