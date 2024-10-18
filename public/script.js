@@ -38,12 +38,11 @@ document.getElementById('buyButton').addEventListener('click', async () => {
             }),
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(`Erro ao criar preferência de pagamento: ${errorData.error}`);
-        }
-
         const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(`Erro ao criar preferência de pagamento: ${data.error}\nDetalhes: ${data.details}\nStack: ${data.stack}`);
+        }
 
         if (data.qr_code_data) {
             qrCodeContainer.innerHTML = ''; // Limpa o conteúdo anterior
@@ -52,14 +51,10 @@ document.getElementById('buyButton').addEventListener('click', async () => {
             qrCodeImg.alt = 'QR Code de Pagamento';
             qrCodeContainer.appendChild(qrCodeImg);
 
-            // Adiciona um link para o pagamento
-            const paymentLink = document.createElement('a');
-            paymentLink.href = data.qr_code_url;
-            paymentLink.target = '_blank';
-            paymentLink.textContent = 'Abrir página de pagamento';
-            paymentLink.style.display = 'block';
-            paymentLink.style.marginTop = '10px';
-            qrCodeContainer.appendChild(paymentLink);
+            // Adiciona um texto explicativo
+            const instructionText = document.createElement('p');
+            instructionText.textContent = 'Escaneie este QR code com o aplicativo do Mercado Pago para realizar o pagamento.';
+            qrCodeContainer.appendChild(instructionText);
         } else {
             qrCodeContainer.innerHTML = 'QR Code não disponível';
         }
