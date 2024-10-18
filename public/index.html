@@ -9,7 +9,10 @@
 <body>
     <div class="container">
         <h1>Produto de Teste</h1>
-        <p>Preço: R$ 10,00</p>
+        <div class="input-group">
+            <label for="productPrice">Preço (R$):</label>
+            <input type="number" id="productPrice" min="0.01" step="0.01" value="10.00">
+        </div>
         <button id="buyButton">Gerar QR Code</button>
     </div>
     <div id="qrCodeContainer"></div>

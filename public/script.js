@@ -2,6 +2,13 @@ const mp = new MercadoPago('APP_USR-c8f7ccb0-e15e-4b43-9a96-33ee147bb9e6');
 
 document.getElementById('buyButton').addEventListener('click', async () => {
     try {
+        const price = parseFloat(document.getElementById('productPrice').value);
+        
+        if (isNaN(price) || price <= 0) {
+            alert('Por favor, insira um valor válido para o produto.');
+            return;
+        }
+
         const response = await fetch('/api/create_preference', {
             method: 'POST',
             headers: {
@@ -9,7 +16,7 @@ document.getElementById('buyButton').addEventListener('click', async () => {
             },
             body: JSON.stringify({
                 title: 'Produto de Teste',
-                price: 10,
+                price: price,
                 quantity: 1
             }),
         });
