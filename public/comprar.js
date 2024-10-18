@@ -84,13 +84,16 @@ async function generateQRCode(product) {
             throw new Error(`Erro ao criar preferência de pagamento: ${data.error}`);
         }
 
-        if (data.qr_code_data) {
+        if (data.qr_code_data && data.payment_id) {
             qrCodeContainer.innerHTML = `
                 <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.qr_code_data)}" alt="QR Code de Pagamento" class="mb-4">
                 <p class="text-blue-300 mb-2">Escaneie este QR code com o aplicativo do Mercado Pago para realizar o pagamento.</p>
                 <p class="text-sm text-gray-400 bg-gray-800 p-2 rounded">Código PIX: ${data.qr_code_data}</p>
             `;
             gsap.from(qrCodeContainer.children, {duration: 0.5, opacity: 0, y: 20, stagger: 0.1, ease: "power2.out"});
+            
+            // Iniciar verificação do status do pagamento
+            checkPaymentStatus(data.payment_id);
         } else {
             qrCodeContainer.innerHTML = '<p class="text-red-500">QR Code não disponível. Por favor, tente novamente.</p>';
         }
@@ -98,4 +101,31 @@ async function generateQRCode(product) {
         console.error('Erro:', error);
         qrCodeContainer.innerHTML = `<p class="text-red-500">Erro ao gerar QR Code: ${error.message}</p>`;
     }
+}
+
+async function checkPaymentStatus(paymentId) {
+    const statusCheckInterval = setInterval(async () => {
+        try {
+            const response = await fetch(`/api/check_payment_status?payment_id=${paymentId}`);
+            const data = await response.json();
+
+            if (data.status === 'approved') {
+                clearInterval(statusCheckInterval);
+                showPaymentConfirmation();
+            }
+        } catch (error) {
+            console.error('Erro ao verificar status do pagamento:', error);
+        }
+    }, 5000); // Verifica a cada 5 segundos
+}
+
+function showPaymentConfirmation() {
+    const qrCodeContainer = document.getElementById('qrCodeContainer');
+    qrCodeContainer.innerHTML = `
+        <div class="bg-green-500 text-white p-4 rounded-lg text-center">
+            <h3 class="text-2xl font-bold mb-2">PIX Confirmado!</h3>
+            <p>Seu pagamento foi processado com sucesso.</p>
+        </div>
+    `;
+    gsap.from(qrCodeContainer.children, {duration: 0.5, opacity: 0, y: 20, ease: "power2.out"});
 }
