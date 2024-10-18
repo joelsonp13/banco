@@ -46,7 +46,10 @@ document.getElementById('buyButton').addEventListener('click', async () => {
 
         if (data.qr_code_base64) {
             console.log('QR Code base64 recebido, exibindo imagem...');
-            qrCodeContainer.innerHTML = `<img src="data:image/png;base64,${data.qr_code_base64}" alt="QR Code">`;
+            const qrCodeImg = document.createElement('img');
+            qrCodeImg.src = `data:image/png;base64,${data.qr_code_base64}`;
+            qrCodeImg.alt = 'QR Code';
+            qrCodeContainer.appendChild(qrCodeImg);
         } else if (data.qr_code) {
             console.log('QR Code string recebido, gerando imagem...');
             const qr = qrcode(0, 'L');
@@ -67,10 +70,10 @@ document.getElementById('buyButton').addEventListener('click', async () => {
             console.log('Link de pagamento não disponível');
         }
 
-        // Exibir resposta completa para diagnóstico
-        const responseElement = document.createElement('pre');
-        responseElement.textContent = JSON.stringify(data.full_response, null, 2);
-        qrCodeContainer.appendChild(responseElement);
+        // Remova esta parte para não exibir a resposta completa na página
+        // const responseElement = document.createElement('pre');
+        // responseElement.textContent = JSON.stringify(data.full_response, null, 2);
+        // qrCodeContainer.appendChild(responseElement);
 
     } catch (error) {
         console.error('Erro:', error);

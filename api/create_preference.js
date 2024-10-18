@@ -56,7 +56,8 @@ module.exports = async (req, res) => {
             init_point: response.body.init_point,
             qr_code: qrCodeData,
             qr_code_base64: qrCodeBase64.split(',')[1], // Remove o prefixo "data:image/png;base64,"
-            full_response: response.body
+            // Remova a linha abaixo para não enviar a resposta completa
+            // full_response: response.body
         });
     } catch (error) {
         console.error('Erro ao criar preferência:', error);
