@@ -61,6 +61,10 @@ module.exports = async (req, res) => {
         });
     } catch (error) {
         console.error('Erro ao criar preferência:', error);
-        res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+        res.status(500).json({ 
+            error: 'Erro interno do servidor', 
+            details: error.message,
+            stack: error.stack
+        });
     }
 };

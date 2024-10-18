@@ -21,7 +21,7 @@ document.getElementById('buyButton').addEventListener('click', async () => {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`Erro ao criar preferência: ${errorData.error}`);
+            throw new Error(`Erro ao criar preferência: ${errorData.error}\nDetalhes: ${errorData.details}`);
         }
 
         const data = await response.json();
@@ -32,6 +32,6 @@ document.getElementById('buyButton').addEventListener('click', async () => {
 
     } catch (error) {
         console.error('Erro:', error);
-        alert(`Ocorreu um erro. Por favor, tente novamente.`);
+        alert(`Ocorreu um erro. Por favor, tente novamente.\n\nDetalhes: ${error.message}`);
     }
 });
