@@ -99,6 +99,9 @@ async function generateQRCode(product) {
                 </div>
             `;
             gsap.from(qrCodeContainer.children, {duration: 0.5, opacity: 0, y: 20, stagger: 0.1, ease: "power2.out"});
+            
+            // Iniciar verificação do status do pagamento
+            checkPaymentStatus(data.preference_id);
         } else {
             qrCodeContainer.innerHTML = '<p class="text-red-500">Opções de pagamento não disponíveis. Por favor, tente novamente.</p>';
         }
@@ -112,15 +115,18 @@ async function generateQRCode(product) {
     }
 }
 
-async function checkPaymentStatus(paymentId) {
+async function checkPaymentStatus(preferenceId) {
     const statusCheckInterval = setInterval(async () => {
         try {
-            const response = await fetch(`/api/check_payment_status?payment_id=${paymentId}`);
+            const response = await fetch(`/api/check_payment_status?payment_id=${preferenceId}`);
             const data = await response.json();
 
             if (data.status === 'approved') {
                 clearInterval(statusCheckInterval);
                 showPaymentConfirmation();
+            } else if (data.status === 'rejected' || data.status === 'cancelled') {
+                clearInterval(statusCheckInterval);
+                showPaymentError(data.status_detail);
             }
         } catch (error) {
             console.error('Erro ao verificar status do pagamento:', error);
@@ -132,8 +138,20 @@ function showPaymentConfirmation() {
     const qrCodeContainer = document.getElementById('qrCodeContainer');
     qrCodeContainer.innerHTML = `
         <div class="bg-green-500 text-white p-4 rounded-lg text-center">
-            <h3 class="text-2xl font-bold mb-2">PIX Confirmado!</h3>
+            <h3 class="text-2xl font-bold mb-2">Pagamento Confirmado!</h3>
             <p>Seu pagamento foi processado com sucesso.</p>
+        </div>
+    `;
+    gsap.from(qrCodeContainer.children, {duration: 0.5, opacity: 0, y: 20, ease: "power2.out"});
+}
+
+function showPaymentError(errorDetail) {
+    const qrCodeContainer = document.getElementById('qrCodeContainer');
+    qrCodeContainer.innerHTML = `
+        <div class="bg-red-500 text-white p-4 rounded-lg text-center">
+            <h3 class="text-2xl font-bold mb-2">Erro no Pagamento</h3>
+            <p>Houve um problema com o seu pagamento: ${errorDetail}</p>
+            <p class="mt-2">Por favor, tente novamente ou entre em contato com o suporte.</p>
         </div>
     `;
     gsap.from(qrCodeContainer.children, {duration: 0.5, opacity: 0, y: 20, ease: "power2.out"});

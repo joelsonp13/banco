@@ -14,7 +14,10 @@ module.exports = async (req, res) => {
     try {
         const payment = await mercadopago.payment.get(payment_id);
         
-        res.status(200).json({ status: payment.body.status });
+        res.status(200).json({ 
+            status: payment.body.status,
+            status_detail: payment.body.status_detail
+        });
     } catch (error) {
         console.error('Erro ao verificar status do pagamento:', error);
         res.status(500).json({ error: 'Erro ao verificar status do pagamento' });
