@@ -387,7 +387,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (onConfirm) onConfirm();
                 removeMessage();
             });
-
             cancelBtn.addEventListener('click', removeMessage);
         } else {
             // Remove a mensagem após 3 segundos com animação de saída
