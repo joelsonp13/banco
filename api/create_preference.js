@@ -1,5 +1,4 @@
 const mercadopago = require('mercadopago');
-const qrcode = require('qrcode');
 
 module.exports = async (req, res) => {
     console.log('1. Recebida requisição para criar preferência de pagamento');
@@ -27,6 +26,14 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Dados inválidos' });
         }
 
+        // Função para formatar a data no formato correto
+        function formatDate(date) {
+            return date.toISOString().replace('Z', '-03:00');
+        }
+
+        const now = new Date();
+        const expirationDate = new Date(now.getTime() + 30 * 60000); // 30 minutos a partir de agora
+
         const preference = {
             items: [
                 {
@@ -43,31 +50,35 @@ module.exports = async (req, res) => {
             },
             external_reference: "QR_CODE_PAYMENT",
             expires: true,
-            expiration_date_from: new Date().toISOString(),
-            expiration_date_to: new Date(Date.now() + 30 * 60000).toISOString(), // 30 minutos de validade
+            expiration_date_from: formatDate(now),
+            expiration_date_to: formatDate(expirationDate),
         };
 
         console.log('8. Criando preferência de pagamento');
         const response = await mercadopago.preferences.create(preference);
 
         console.log('9. Resposta do Mercado Pago recebida');
-        console.log('10. Resposta do Mercado Pago:', JSON.stringify(response, null, 2));
+        console.log('10. Resposta do Mercado Pago:', JSON.stringify(response.body, null, 2));
 
         if (!response.body.id) {
             throw new Error('ID da preferência não recebido do Mercado Pago');
         }
 
-        const qrCodeData = `https://www.mercadopago.com.br/qr/${response.body.id}`;
+        // Obter o QR code do Mercado Pago
+        console.log('11. Obtendo QR code do Mercado Pago');
+        const qrResponse = await mercadopago.qr.create({
+            file_type: 'image/png',
+            size: 500,
+            preference_id: response.body.id
+        });
 
-        console.log('11. Gerando imagem do QR code');
-
-        console.log('12. QR code gerado com sucesso');
+        console.log('12. QR code obtido com sucesso');
 
         console.log('13. Enviando resposta ao cliente');
         res.json({ 
             preference_id: response.body.id,
             init_point: response.body.init_point,
-            qr_code: qrCodeData,
+            qr_code_base64: qrResponse.base64
         });
         console.log('14. Resposta enviada com sucesso');
     } catch (error) {
