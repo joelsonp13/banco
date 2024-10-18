@@ -13,7 +13,8 @@ module.exports = async (req, res) => {
 
     try {
         const payment = await mercadopago.payment.get(payment_id);
-        
+        console.log('Resposta do Mercado Pago:', JSON.stringify(payment, null, 2)); // Adicione este log
+
         res.status(200).json({ 
             status: payment.body.status,
             status_detail: payment.body.status_detail

@@ -101,7 +101,7 @@ async function generateQRCode(product) {
             gsap.from(qrCodeContainer.children, {duration: 0.5, opacity: 0, y: 20, stagger: 0.1, ease: "power2.out"});
             
             // Iniciar verificação do status do pagamento
-            checkPaymentStatus(data.preference_id);
+            checkPaymentStatus(data.payment_id); // Use payment_id em vez de preference_id
         } else {
             qrCodeContainer.innerHTML = '<p class="text-red-500">Opções de pagamento não disponíveis. Por favor, tente novamente.</p>';
         }
@@ -121,6 +121,8 @@ async function checkPaymentStatus(preferenceId) {
             const response = await fetch(`/api/check_payment_status?payment_id=${preferenceId}`);
             const data = await response.json();
 
+            console.log('Status do pagamento:', data.status); // Adicione este log
+
             if (data.status === 'approved') {
                 clearInterval(statusCheckInterval);
                 showPaymentConfirmation();
@@ -138,8 +140,8 @@ function showPaymentConfirmation() {
     const qrCodeContainer = document.getElementById('qrCodeContainer');
     qrCodeContainer.innerHTML = `
         <div class="bg-green-500 text-white p-4 rounded-lg text-center">
-            <h3 class="text-2xl font-bold mb-2">Pagamento Confirmado!</h3>
-            <p>Seu pagamento foi processado com sucesso.</p>
+            <h3 class="text-2xl font-bold mb-2">Pagamento Confirmado com Sucesso!</h3>
+            <p>Seu pagamento foi processado e confirmado.</p>
         </div>
     `;
     gsap.from(qrCodeContainer.children, {duration: 0.5, opacity: 0, y: 20, ease: "power2.out"});
