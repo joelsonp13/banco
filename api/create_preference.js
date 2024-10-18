@@ -47,18 +47,28 @@ module.exports = async (req, res) => {
         console.log('Resposta do Mercado Pago:', response.body);
 
         // Gerar o QR code para pagamento
-        const qrResponse = await mercadopago.qr.create({
-            file_type: "image/png",
-            size: 500,
-            preference_id: response.body.id
-        });
+        let qrCodeUrl = response.body.init_point;
+        let qrCodeBase64 = null;
 
-        console.log('Resposta do QR code:', qrResponse);
+        if (mercadopago.qr && typeof mercadopago.qr.create === 'function') {
+            try {
+                const qrResponse = await mercadopago.qr.create({
+                    file_type: "image/png",
+                    size: 500,
+                    preference_id: response.body.id
+                });
+                qrCodeBase64 = qrResponse.response.qr;
+            } catch (qrError) {
+                console.error('Erro ao gerar QR code:', qrError);
+            }
+        } else {
+            console.warn('mercadopago.qr.create não está disponível. Usando URL padrão.');
+        }
 
         res.json({ 
             id: response.body.id,
-            qr_code_base64: qrResponse.response.qr,
-            qr_code_url: response.body.init_point
+            qr_code_base64: qrCodeBase64,
+            qr_code_url: qrCodeUrl
         });
     } catch (error) {
         console.error('Erro ao criar preferência:', error);
