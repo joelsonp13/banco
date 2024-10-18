@@ -63,7 +63,7 @@ function displayProductDetails(product) {
 
 async function generateQRCode(product) {
     const qrCodeContainer = document.getElementById('qrCodeContainer');
-    qrCodeContainer.innerHTML = '<p class="text-blue-300">Gerando link de pagamento...</p>';
+    qrCodeContainer.innerHTML = '<p class="text-blue-300">Gerando opções de pagamento...</p>';
 
     try {
         const user = firebase.auth().currentUser;
@@ -87,21 +87,25 @@ async function generateQRCode(product) {
             throw new Error(data.error || 'Erro ao criar preferência de pagamento');
         }
 
-        if (data.init_point) {
+        if (data.init_point && data.qr_code_base64) {
             qrCodeContainer.innerHTML = `
-                <a href="${data.init_point}" target="_blank" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    Pagar com Mercado Pago
-                </a>
-                <p class="text-sm text-gray-400 mt-2">Clique no botão acima para realizar o pagamento através do Mercado Pago.</p>
+                <div class="flex flex-col items-center">
+                    <img src="data:image/png;base64,${data.qr_code_base64}" alt="QR Code PIX" class="mb-4 w-48 h-48">
+                    <p class="text-sm text-gray-400 mb-4">Escaneie o QR Code acima para pagar via PIX</p>
+                    <a href="${data.init_point}" target="_blank" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-2">
+                        Pagar com Mercado Pago
+                    </a>
+                    <p class="text-sm text-gray-400 mt-2">Ou clique no botão acima para outras opções de pagamento.</p>
+                </div>
             `;
             gsap.from(qrCodeContainer.children, {duration: 0.5, opacity: 0, y: 20, stagger: 0.1, ease: "power2.out"});
         } else {
-            qrCodeContainer.innerHTML = '<p class="text-red-500">Link de pagamento não disponível. Por favor, tente novamente.</p>';
+            qrCodeContainer.innerHTML = '<p class="text-red-500">Opções de pagamento não disponíveis. Por favor, tente novamente.</p>';
         }
     } catch (error) {
         console.error('Erro completo:', error);
         qrCodeContainer.innerHTML = `
-            <p class="text-red-500">Erro ao gerar link de pagamento: ${error.message}</p>
+            <p class="text-red-500">Erro ao gerar opções de pagamento: ${error.message}</p>
             <p class="text-sm text-gray-400 mt-2">Por favor, tente novamente mais tarde ou entre em contato com o suporte.</p>
             <p class="text-xs text-gray-500 mt-2">Detalhes técnicos: ${JSON.stringify(error)}</p>
         `;

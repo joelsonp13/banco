@@ -45,10 +45,22 @@ module.exports = async (req, res) => {
         console.log('Resposta do Mercado Pago:', JSON.stringify(response, null, 2));
 
         if (response.body.id) {
+            // Gerar o QR code para pagamento PIX
+            const pixPayment = await mercadopago.payment.create({
+                transaction_amount: parseFloat(price),
+                description: title,
+                payment_method_id: 'pix',
+                payer: {
+                    email: userEmail,
+                }
+            });
+
             res.status(200).json({
                 preference_id: response.body.id,
                 init_point: response.body.init_point,
-                sandbox_init_point: response.body.sandbox_init_point
+                sandbox_init_point: response.body.sandbox_init_point,
+                qr_code: pixPayment.body.point_of_interaction.transaction_data.qr_code,
+                qr_code_base64: pixPayment.body.point_of_interaction.transaction_data.qr_code_base64
             });
         } else {
             throw new Error('Falha ao criar preferência de pagamento');
