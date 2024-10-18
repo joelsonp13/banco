@@ -59,7 +59,8 @@ module.exports = async (req, res) => {
             id: response.body.id,
             init_point: initPoint,
             qr_code: qrCode,
-            qr_code_base64: qrCodeBase64
+            qr_code_base64: qrCodeBase64,
+            full_response: response.body // Adicionando a resposta completa para diagnóstico
         });
     } catch (error) {
         console.error('Erro ao criar preferência:', error);

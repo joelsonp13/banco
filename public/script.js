@@ -40,7 +40,7 @@ document.getElementById('buyButton').addEventListener('click', async () => {
         }
 
         const data = await response.json();
-        console.log('Resposta do servidor:', data);
+        console.log('Resposta completa do servidor:', data);
 
         qrCodeContainer.innerHTML = '';
 
@@ -66,6 +66,11 @@ document.getElementById('buyButton').addEventListener('click', async () => {
         } else {
             console.log('Link de pagamento não disponível');
         }
+
+        // Exibir resposta completa para diagnóstico
+        const responseElement = document.createElement('pre');
+        responseElement.textContent = JSON.stringify(data.full_response, null, 2);
+        qrCodeContainer.appendChild(responseElement);
 
     } catch (error) {
         console.error('Erro:', error);
