@@ -101,7 +101,7 @@ async function generateQRCode(product) {
             gsap.from(qrCodeContainer.children, {duration: 0.5, opacity: 0, y: 20, stagger: 0.1, ease: "power2.out"});
             
             // Iniciar verificação do status do pagamento
-            checkPaymentStatus(data.payment_id); // Use payment_id em vez de preference_id
+            checkPaymentStatus(data.payment_id, product); // Passando o produto como segundo argumento
         } else {
             qrCodeContainer.innerHTML = '<p class="text-red-500">Opções de pagamento não disponíveis. Por favor, tente novamente.</p>';
         }
@@ -115,7 +115,7 @@ async function generateQRCode(product) {
     }
 }
 
-async function checkPaymentStatus(paymentId) {
+async function checkPaymentStatus(paymentId, product) {
     const statusCheckInterval = setInterval(async () => {
         try {
             const response = await fetch(`/api/check_payment_status?payment_id=${paymentId}`);
@@ -129,6 +129,7 @@ async function checkPaymentStatus(paymentId) {
 
             if (data.status === 'approved') {
                 clearInterval(statusCheckInterval);
+                await savePurchaseToFirebase(paymentId, product);
                 showPaymentConfirmation();
             } else if (data.status === 'rejected' || data.status === 'cancelled') {
                 clearInterval(statusCheckInterval);
@@ -142,12 +143,40 @@ async function checkPaymentStatus(paymentId) {
     }, 5000);
 }
 
+async function savePurchaseToFirebase(paymentId, product) {
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            throw new Error('Usuário não autenticado');
+        }
+
+        const db = firebase.firestore();
+        const purchaseRef = db.collection('purchases').doc(paymentId);
+
+        await purchaseRef.set({
+            userId: user.uid,
+            userEmail: user.email,
+            productId: product.id,
+            productName: product.name,
+            productPrice: product.currentPrice,
+            purchaseDate: firebase.firestore.FieldValue.serverTimestamp(),
+            paymentId: paymentId,
+            status: 'completed'
+        });
+
+        console.log('Compra salva no Firebase com sucesso');
+    } catch (error) {
+        console.error('Erro ao salvar compra no Firebase:', error);
+    }
+}
+
 function showPaymentConfirmation() {
     const qrCodeContainer = document.getElementById('qrCodeContainer');
     qrCodeContainer.innerHTML = `
         <div class="bg-green-500 text-white p-4 rounded-lg text-center">
             <h3 class="text-2xl font-bold mb-2">Pagamento Confirmado com Sucesso!</h3>
             <p>Seu pagamento foi processado e confirmado.</p>
+            <p class="mt-2">Os detalhes da sua compra foram salvos.</p>
         </div>
     `;
     gsap.from(qrCodeContainer.children, {duration: 0.5, opacity: 0, y: 20, ease: "power2.out"});
