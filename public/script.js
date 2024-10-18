@@ -12,7 +12,6 @@ document.getElementById('buyButton').addEventListener('click', async () => {
         const response = await fetch('/api/create_preference', {
             method: 'POST',
             headers: {
-                'Content-Security-Policy': "default-src 'self'; connect-src 'self' https://api.mercadopago.com",
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
