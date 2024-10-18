@@ -81,7 +81,7 @@ async function generateQRCode(product) {
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(`Erro ao criar preferência de pagamento: ${data.error}`);
+            throw new Error(data.error || 'Erro ao criar preferência de pagamento');
         }
 
         if (data.qr_code_data && data.payment_id) {
@@ -99,7 +99,10 @@ async function generateQRCode(product) {
         }
     } catch (error) {
         console.error('Erro:', error);
-        qrCodeContainer.innerHTML = `<p class="text-red-500">Erro ao gerar QR Code: ${error.message}</p>`;
+        qrCodeContainer.innerHTML = `
+            <p class="text-red-500">Erro ao gerar QR Code: ${error.message}</p>
+            <p class="text-sm text-gray-400 mt-2">Por favor, tente novamente mais tarde ou entre em contato com o suporte.</p>
+        `;
     }
 }
 
