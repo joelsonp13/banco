@@ -22,7 +22,8 @@ document.getElementById('buyButton').addEventListener('click', async () => {
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorData = await response.json();
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.error}, details: ${errorData.details}`);
         }
 
         const data = await response.json();
@@ -33,6 +34,6 @@ document.getElementById('buyButton').addEventListener('click', async () => {
 
     } catch (error) {
         console.error('Erro ao criar preferência:', error);
-        alert('Ocorreu um erro ao gerar o QR Code. Por favor, tente novamente.');
+        alert(`Ocorreu um erro ao gerar o QR Code. Por favor, tente novamente. Detalhes: ${error.message}`);
     }
 });
