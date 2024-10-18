@@ -1,4 +1,5 @@
 const mercadopago = require('mercadopago');
+const qrcode = require('qrcode');
 
 module.exports = async (req, res) => {
     console.log('1. Recebida requisição para criar preferência de pagamento');
@@ -26,7 +27,6 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Dados inválidos' });
         }
 
-        // Função para formatar a data no formato correto
         function formatDate(date) {
             return date.toISOString().replace('Z', '-03:00');
         }
@@ -64,21 +64,18 @@ module.exports = async (req, res) => {
             throw new Error('ID da preferência não recebido do Mercado Pago');
         }
 
-        // Obter o QR code do Mercado Pago
-        console.log('11. Obtendo QR code do Mercado Pago');
-        const qrResponse = await mercadopago.qr.create({
-            file_type: 'image/png',
-            size: 500,
-            preference_id: response.body.id
-        });
+        // Gerar QR code usando a URL da preferência
+        console.log('11. Gerando QR code');
+        const qrCodeUrl = `https://www.mercadopago.com.br/qr/${response.body.id}`;
+        const qrCodeBase64 = await qrcode.toDataURL(qrCodeUrl);
 
-        console.log('12. QR code obtido com sucesso');
+        console.log('12. QR code gerado com sucesso');
 
         console.log('13. Enviando resposta ao cliente');
         res.json({ 
             preference_id: response.body.id,
             init_point: response.body.init_point,
-            qr_code_base64: qrResponse.base64
+            qr_code_base64: qrCodeBase64.split(',')[1] // Remove o prefixo "data:image/png;base64,"
         });
         console.log('14. Resposta enviada com sucesso');
     } catch (error) {
