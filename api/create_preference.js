@@ -5,6 +5,7 @@ mercadopago.configure({
 });
 
 module.exports = async (req, res) => {
+    console.log('Recebida requisição para criar preferência');
     try {
         const preference = {
             items: [
@@ -22,10 +23,13 @@ module.exports = async (req, res) => {
             auto_return: 'approved',
         };
 
+        console.log('Preferência criada:', preference);
+
         const response = await mercadopago.preferences.create(preference);
+        console.log('Resposta do Mercado Pago:', response.body);
         res.json({ id: response.body.id });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Erro ao criar preferência' });
+        console.error('Erro ao criar preferência:', error);
+        res.status(500).json({ error: 'Erro ao criar preferência', details: error.message });
     }
 };

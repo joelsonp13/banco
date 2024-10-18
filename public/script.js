@@ -21,6 +21,15 @@ document.getElementById('buyButton').addEventListener('click', async () => {
             }),
         });
 
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            throw new TypeError("Oops, não recebemos JSON!");
+        }
+
         const preference = await response.json();
 
         const qrCode = await mp.bricks().create("wallet", "qrCodeContainer", {
@@ -30,5 +39,6 @@ document.getElementById('buyButton').addEventListener('click', async () => {
         });
     } catch (error) {
         console.error('Erro ao criar preferência:', error);
+        alert('Ocorreu um erro ao gerar o QR Code. Por favor, tente novamente.');
     }
 });
