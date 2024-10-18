@@ -9,6 +9,8 @@ module.exports = async (req, res) => {
         return res.status(500).json({ error: 'Configuração do servidor incompleta' });
     }
 
+    console.log('Token de acesso do Mercado Pago obtido com sucesso');
+
     mercadopago.configure({
         access_token: process.env.MERCADO_PAGO_ACCESS_TOKEN
     });
