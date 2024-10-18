@@ -46,13 +46,14 @@ document.getElementById('buyButton').addEventListener('click', async () => {
         const data = await response.json();
 
         if (data.qr_code_url) {
-            const qrcode = new QRCode(qrCodeContainer, {
-                text: data.qr_code_url,
+            qrCodeContainer.innerHTML = ''; // Limpa o conteúdo anterior
+            await QRCode.toCanvas(qrCodeContainer, data.qr_code_url, {
                 width: 256,
-                height: 256,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
+                margin: 1,
+                color: {
+                    dark: '#000000',
+                    light: '#ffffff'
+                }
             });
         } else {
             qrCodeContainer.innerHTML = 'QR Code não disponível';
