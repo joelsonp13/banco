@@ -1,6 +1,9 @@
 {
   "name": "mercadopago-qr-test",
   "version": "1.0.0",
+  "scripts": {
+    "build": "npm install"
+  },
   "dependencies": {
     "mercadopago": "^1.5.16",
     "qrcode": "^1.5.1"
