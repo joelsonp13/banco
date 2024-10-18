@@ -1,4 +1,7 @@
-console.log('Iniciando configuração do Firebase');
+// Importe os módulos necessários do Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -11,25 +14,12 @@ const firebaseConfig = {
   measurementId: "G-RPNF4GKLBJ"
 };
 
-console.log('Configuração do Firebase definida');
-
 // Inicialize o Firebase
-if (!firebase.apps.length) {
-  console.log('Inicializando Firebase');
-  firebase.initializeApp(firebaseConfig);
-} else {
-  console.log('Firebase já inicializado');
-}
+const app = initializeApp(firebaseConfig);
 
+// Obtenha as instâncias de auth e firestore
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-
-// Exporte a instância do Firestore
-const db = firebase.firestore();
-console.log('Instância do Firestore criada');
-
-// Verifique se db está definido
-if (db) {
-  console.log('db está definido');
-} else {
-  console.error('db não está definido');
-}
+// Exporte as instâncias de auth e firestore
+export { auth, db };
