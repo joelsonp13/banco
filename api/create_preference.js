@@ -27,13 +27,6 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Dados inválidos' });
         }
 
-        function formatDate(date) {
-            return date.toISOString().replace('Z', '-03:00');
-        }
-
-        const now = new Date();
-        const expirationDate = new Date(now.getTime() + 30 * 60000); // 30 minutos a partir de agora
-
         const preference = {
             items: [
                 {
@@ -49,9 +42,6 @@ module.exports = async (req, res) => {
                 installments: 1
             },
             external_reference: "QR_CODE_PAYMENT",
-            expires: true,
-            expiration_date_from: formatDate(now),
-            expiration_date_to: formatDate(expirationDate),
         };
 
         console.log('8. Criando preferência de pagamento');

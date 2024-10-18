@@ -1,20 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        console.log('Tentando obter a chave pública do Mercado Pago...');
-        const response = await fetch('/api/get_public_key');
-        const data = await response.json();
-        
-        if (data.error) {
-            console.error('Erro ao obter a chave pública:', data.error);
-        } else {
-            window.mercadoPagoPublicKey = data.publicKey;
-            console.log('Chave pública do Mercado Pago obtida com sucesso');
-        }
-    } catch (error) {
-        console.error('Erro ao obter a chave pública:', error);
-    }
-
-    try {
         console.log('Verificando o token de acesso do Mercado Pago...');
         const response = await fetch('/api/check_access_token');
         const data = await response.json();
