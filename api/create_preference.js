@@ -53,22 +53,29 @@ module.exports = async (req, res) => {
         console.log('10. Resposta do Mercado Pago recebida');
         console.log('11. Resposta do Mercado Pago:', JSON.stringify(response.body, null, 2));
 
-        console.log('12. Gerando QR code');
-        const qrCodeData = response.body.init_point;
-        const qrCodeBase64 = await qrcode.toDataURL(qrCodeData);
-        console.log('13. QR code gerado com sucesso');
+        console.log('12. Gerando QR code para pagamento');
+        const qrCodeResponse = await mercadopago.qr.create({
+            external_reference: response.body.id,
+            amount: Number(price),
+            description: title,
+        });
 
-        console.log('14. Enviando resposta ao cliente');
+        console.log('13. Resposta do QR code:', JSON.stringify(qrCodeResponse, null, 2));
+
+        const qrCodeBase64 = await qrcode.toDataURL(qrCodeResponse.qr_data);
+        console.log('14. QR code gerado com sucesso');
+
+        console.log('15. Enviando resposta ao cliente');
         res.json({ 
             id: response.body.id,
             init_point: response.body.init_point,
-            qr_code: qrCodeData,
+            qr_code: qrCodeResponse.qr_data,
             qr_code_base64: qrCodeBase64.split(',')[1], // Remove o prefixo "data:image/png;base64,"
         });
-        console.log('15. Resposta enviada com sucesso');
+        console.log('16. Resposta enviada com sucesso');
     } catch (error) {
-        console.error('16. ERRO ao criar preferência:', error);
-        console.error('17. Stack do erro:', error.stack);
+        console.error('17. ERRO ao criar preferência ou QR code:', error);
+        console.error('18. Stack do erro:', error.stack);
         res.status(500).json({ 
             error: 'Erro interno do servidor',
             details: error.message,
