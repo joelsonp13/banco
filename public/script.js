@@ -55,6 +55,11 @@ document.getElementById('buyButton').addEventListener('click', async () => {
             const instructionText = document.createElement('p');
             instructionText.textContent = 'Escaneie este QR code com o aplicativo do Mercado Pago para realizar o pagamento.';
             qrCodeContainer.appendChild(instructionText);
+
+            // Adiciona o código PIX como texto
+            const pixCodeText = document.createElement('p');
+            pixCodeText.textContent = `Código PIX: ${data.qr_code_data}`;
+            qrCodeContainer.appendChild(pixCodeText);
         } else {
             qrCodeContainer.innerHTML = 'QR Code não disponível';
         }

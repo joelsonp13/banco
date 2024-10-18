@@ -48,25 +48,30 @@ module.exports = async (req, res) => {
             throw new Error('ID da preferência não recebido do Mercado Pago');
         }
 
-        console.log('9. Criando QR code');
-        const qrCodeData = await mercadopago.qr.create({
-            external_reference: response.body.id,
-            amount: Number(price),
+        console.log('9. Gerando QR code');
+        const qrCodeData = await mercadopago.payment.create({
+            transaction_amount: Number(price),
             description: title,
+            payment_method_id: 'pix',
+            payer: {
+                email: 'test@test.com'
+            }
         });
         console.log('10. Resposta do QR code:', qrCodeData);
 
-        if (!qrCodeData.body || !qrCodeData.body.qr_data) {
+        if (!qrCodeData.body || !qrCodeData.body.point_of_interaction || !qrCodeData.body.point_of_interaction.transaction_data || !qrCodeData.body.point_of_interaction.transaction_data.qr_code) {
             throw new Error('Dados do QR code não recebidos do Mercado Pago');
         }
 
         console.log('11. Enviando resposta ao cliente');
-        res.json({ qr_code_data: qrCodeData.body.qr_data });
+        res.json({ qr_code_data: qrCodeData.body.point_of_interaction.transaction_data.qr_code });
     } catch (error) {
         console.error('ERRO ao criar preferência de pagamento:', error);
+        console.error('Stack do erro:', error.stack);
         res.status(500).json({ 
             error: 'Erro interno do servidor',
-            details: error.message
+            details: error.message,
+            stack: error.stack
         });
     }
 };
