@@ -48,6 +48,7 @@ module.exports = async (req, res) => {
 
         let qrCode = null;
         let qrCodeBase64 = null;
+        let initPoint = response.body.init_point;
 
         if (response.body.point_of_interaction && response.body.point_of_interaction.transaction_data) {
             qrCode = response.body.point_of_interaction.transaction_data.qr_code;
@@ -56,7 +57,7 @@ module.exports = async (req, res) => {
 
         res.json({ 
             id: response.body.id,
-            init_point: response.body.init_point,
+            init_point: initPoint,
             qr_code: qrCode,
             qr_code_base64: qrCodeBase64
         });

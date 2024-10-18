@@ -35,6 +35,7 @@ document.getElementById('buyButton').addEventListener('click', async () => {
         }
 
         const data = await response.json();
+        console.log('Resposta do servidor:', data);
 
         const qrCodeContainer = document.getElementById('qrCodeContainer');
         qrCodeContainer.innerHTML = '';
@@ -42,11 +43,17 @@ document.getElementById('buyButton').addEventListener('click', async () => {
         if (data.qr_code_base64) {
             // Exibir o QR code se disponível
             qrCodeContainer.innerHTML = `<img src="data:image/png;base64,${data.qr_code_base64}" alt="QR Code">`;
+        } else if (data.qr_code) {
+            // Se não tiver o QR code em base64, mas tiver o código QR, gerar a imagem
+            const qr = qrcode(0, 'L');
+            qr.addData(data.qr_code);
+            qr.make();
+            qrCodeContainer.innerHTML = qr.createImgTag(5);
         }
 
-        // Adicionar link abaixo do QR code
+        // Adicionar link de pagamento
         const linkElement = document.createElement('p');
-        linkElement.innerHTML = `<a href="${data.qr_code}" target="_blank">Abrir link do pagamento</a>`;
+        linkElement.innerHTML = `<a href="${data.init_point}" target="_blank">Abrir link do pagamento</a>`;
         qrCodeContainer.appendChild(linkElement);
 
     } catch (error) {
