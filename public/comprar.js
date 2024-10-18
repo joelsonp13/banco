@@ -63,9 +63,10 @@ function displayProductDetails(product) {
 
 async function generateQRCode(product) {
     const qrCodeContainer = document.getElementById('qrCodeContainer');
-    qrCodeContainer.innerHTML = '<p class="text-blue-300">Gerando QR Code...</p>';
+    qrCodeContainer.innerHTML = '<p class="text-blue-300">Gerando link de pagamento...</p>';
 
     try {
+        const user = firebase.auth().currentUser;
         const response = await fetch('/api/create_preference', {
             method: 'POST',
             headers: {
@@ -74,7 +75,8 @@ async function generateQRCode(product) {
             body: JSON.stringify({
                 title: product.name,
                 price: product.currentPrice,
-                quantity: 1
+                quantity: 1,
+                userEmail: user.email
             }),
         });
 
@@ -85,22 +87,21 @@ async function generateQRCode(product) {
             throw new Error(data.error || 'Erro ao criar preferência de pagamento');
         }
 
-        if (data.qr_code_data && data.payment_id) {
+        if (data.init_point) {
             qrCodeContainer.innerHTML = `
-                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.qr_code_data)}" alt="QR Code de Pagamento" class="mb-4">
-                <p class="text-blue-300 mb-2">Escaneie este QR code com o aplicativo do Mercado Pago para realizar o pagamento.</p>
-                <p class="text-sm text-gray-400 bg-gray-800 p-2 rounded">Código PIX: ${data.qr_code_data}</p>
+                <a href="${data.init_point}" target="_blank" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    Pagar com Mercado Pago
+                </a>
+                <p class="text-sm text-gray-400 mt-2">Clique no botão acima para realizar o pagamento através do Mercado Pago.</p>
             `;
             gsap.from(qrCodeContainer.children, {duration: 0.5, opacity: 0, y: 20, stagger: 0.1, ease: "power2.out"});
-            
-            checkPaymentStatus(data.payment_id);
         } else {
-            qrCodeContainer.innerHTML = '<p class="text-red-500">QR Code não disponível. Por favor, tente novamente.</p>';
+            qrCodeContainer.innerHTML = '<p class="text-red-500">Link de pagamento não disponível. Por favor, tente novamente.</p>';
         }
     } catch (error) {
         console.error('Erro completo:', error);
         qrCodeContainer.innerHTML = `
-            <p class="text-red-500">Erro ao gerar QR Code: ${error.message}</p>
+            <p class="text-red-500">Erro ao gerar link de pagamento: ${error.message}</p>
             <p class="text-sm text-gray-400 mt-2">Por favor, tente novamente mais tarde ou entre em contato com o suporte.</p>
             <p class="text-xs text-gray-500 mt-2">Detalhes técnicos: ${JSON.stringify(error)}</p>
         `;
