@@ -47,11 +47,23 @@ module.exports = async (req, res) => {
         console.log('Resposta do Mercado Pago:', response.body);
 
         // Gerar o QR code para pagamento
-        let qrCodeUrl = response.body.init_point;
+        const qrData = {
+            cash_out: {
+                amount: Number(price) * Number(quantity)
+            },
+            external_reference: response.body.id,
+            description: title,
+            expiration_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // Expira em 24 horas
+        };
+
+        const qrResponse = await mercadopago.qr.create(qrData);
+
+        console.log('Resposta do QR code:', qrResponse);
 
         res.json({ 
             id: response.body.id,
-            qr_code_url: qrCodeUrl
+            qr_code: qrResponse.qr_data,
+            qr_code_url: response.body.init_point
         });
     } catch (error) {
         console.error('Erro ao criar preferência:', error);
