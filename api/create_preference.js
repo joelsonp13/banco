@@ -11,29 +11,7 @@ module.exports = async (req, res) => {
         return res.status(400).json({ error: 'Título, preço e quantidade são obrigatórios' });
     }
 
-    const preferenceData = {
-        items: [
-            {
-                title: title,
-                quantity: parseInt(quantity),
-                currency_id: 'BRL',
-                unit_price: parseFloat(price)
-            }
-        ],
-        payment_methods: {
-            excluded_payment_methods: [
-                { id: "credit_card" },
-                { id: "debit_card" }
-            ],
-            excluded_payment_types: [
-                { id: "ticket" }
-            ]
-        },
-        binary_mode: true
-    };
-
     try {
-        const preference = await mercadopago.preferences.create(preferenceData);
         const payment = await mercadopago.payment.create({
             transaction_amount: parseFloat(price),
             description: title,
@@ -43,23 +21,27 @@ module.exports = async (req, res) => {
             }
         });
 
-        if (payment.body.status === 'rejected') {
-            console.error('Pagamento rejeitado:', payment.body);
+        console.log('Resposta do Mercado Pago:', JSON.stringify(payment, null, 2));
+
+        if (payment.response.status === 'rejected') {
+            console.error('Pagamento rejeitado:', payment.response);
             return res.status(400).json({ 
                 error: 'Pagamento rejeitado pelo PSP do recebedor',
-                details: payment.body.status_detail
+                details: payment.response.status_detail,
+                fullResponse: payment.response
             });
         }
 
         res.status(200).json({
-            qr_code_data: payment.body.point_of_interaction.transaction_data.qr_code,
-            payment_id: payment.body.id
+            qr_code_data: payment.response.point_of_interaction.transaction_data.qr_code,
+            payment_id: payment.response.id
         });
     } catch (error) {
-        console.error('Erro ao criar preferência de pagamento:', error);
+        console.error('Erro ao criar pagamento:', error);
         res.status(500).json({ 
-            error: 'Erro ao criar preferência de pagamento',
-            details: error.message
+            error: 'Erro ao criar pagamento',
+            details: error.message,
+            stack: error.stack
         });
     }
 };

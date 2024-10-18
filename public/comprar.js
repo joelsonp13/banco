@@ -81,6 +81,7 @@ async function generateQRCode(product) {
         const data = await response.json();
 
         if (!response.ok) {
+            console.error('Erro detalhado:', data);
             throw new Error(data.error || 'Erro ao criar preferência de pagamento');
         }
 
@@ -92,16 +93,16 @@ async function generateQRCode(product) {
             `;
             gsap.from(qrCodeContainer.children, {duration: 0.5, opacity: 0, y: 20, stagger: 0.1, ease: "power2.out"});
             
-            // Iniciar verificação do status do pagamento
             checkPaymentStatus(data.payment_id);
         } else {
             qrCodeContainer.innerHTML = '<p class="text-red-500">QR Code não disponível. Por favor, tente novamente.</p>';
         }
     } catch (error) {
-        console.error('Erro:', error);
+        console.error('Erro completo:', error);
         qrCodeContainer.innerHTML = `
             <p class="text-red-500">Erro ao gerar QR Code: ${error.message}</p>
             <p class="text-sm text-gray-400 mt-2">Por favor, tente novamente mais tarde ou entre em contato com o suporte.</p>
+            <p class="text-xs text-gray-500 mt-2">Detalhes técnicos: ${JSON.stringify(error)}</p>
         `;
     }
 }
