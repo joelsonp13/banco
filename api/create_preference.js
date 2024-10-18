@@ -1,4 +1,5 @@
 const mercadopago = require('mercadopago');
+const qrcode = require('qrcode');
 
 module.exports = async (req, res) => {
     console.log('Recebida requisição para criar preferência');
@@ -46,19 +47,15 @@ module.exports = async (req, res) => {
 
         console.log('Resposta do Mercado Pago:', JSON.stringify(response.body, null, 2));
 
-        let qrCode = null;
-        let qrCodeBase64 = null;
-
-        if (response.body.point_of_interaction && response.body.point_of_interaction.transaction_data) {
-            qrCode = response.body.point_of_interaction.transaction_data.qr_code;
-            qrCodeBase64 = response.body.point_of_interaction.transaction_data.qr_code_base64;
-        }
+        // Gerar QR code manualmente
+        const qrCodeData = response.body.init_point;
+        const qrCodeBase64 = await qrcode.toDataURL(qrCodeData);
 
         res.json({ 
             id: response.body.id,
             init_point: response.body.init_point,
-            qr_code: qrCode,
-            qr_code_base64: qrCodeBase64,
+            qr_code: qrCodeData,
+            qr_code_base64: qrCodeBase64.split(',')[1], // Remove o prefixo "data:image/png;base64,"
             full_response: response.body
         });
     } catch (error) {
