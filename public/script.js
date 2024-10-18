@@ -26,7 +26,6 @@ document.getElementById('buyButton').addEventListener('click', async () => {
             return;
         }
 
-        console.log('Enviando requisição para criar preferência de pagamento...');
         const response = await fetch('/api/create_preference', {
             method: 'POST',
             headers: {
@@ -41,29 +40,21 @@ document.getElementById('buyButton').addEventListener('click', async () => {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`Erro ao criar preferência de pagamento: ${errorData.error}\nDetalhes: ${errorData.details}`);
+            throw new Error(`Erro ao criar preferência de pagamento: ${errorData.error}`);
         }
 
         const data = await response.json();
-        console.log('Resposta completa do servidor:', data);
 
-        qrCodeContainer.innerHTML = '';
-
-        if (data.qr_code_base64) {
-            console.log('QR Code base64 recebido, exibindo imagem...');
-            const qrCodeImg = document.createElement('img');
-            qrCodeImg.src = `data:image/png;base64,${data.qr_code_base64}`;
-            qrCodeImg.alt = 'QR Code de Pagamento';
-            qrCodeContainer.appendChild(qrCodeImg);
-
-            const linkElement = document.createElement('a');
-            linkElement.href = data.init_point;
-            linkElement.target = '_blank';
-            linkElement.textContent = 'Abrir página de pagamento';
-            qrCodeContainer.appendChild(document.createElement('br'));
-            qrCodeContainer.appendChild(linkElement);
+        if (data.qr_code_url) {
+            const qrcode = new QRCode(qrCodeContainer, {
+                text: data.qr_code_url,
+                width: 256,
+                height: 256,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
         } else {
-            console.log('Nenhum QR Code recebido');
             qrCodeContainer.innerHTML = 'QR Code não disponível';
         }
 
