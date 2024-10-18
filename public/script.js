@@ -41,7 +41,7 @@ document.getElementById('buyButton').addEventListener('click', async () => {
             return;
         }
 
-        console.log('Enviando requisição para criar QR code de pagamento...');
+        console.log('Enviando requisição para criar preferência de pagamento...');
         const response = await fetch('/api/create_preference', {
             method: 'POST',
             headers: {
@@ -56,7 +56,7 @@ document.getElementById('buyButton').addEventListener('click', async () => {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`Erro ao criar QR code de pagamento: ${errorData.error}\nDetalhes: ${errorData.details}`);
+            throw new Error(`Erro ao criar preferência de pagamento: ${errorData.error}\nDetalhes: ${errorData.details}`);
         }
 
         const data = await response.json();
@@ -70,6 +70,13 @@ document.getElementById('buyButton').addEventListener('click', async () => {
             qrCodeImg.src = `data:image/png;base64,${data.qr_code_base64}`;
             qrCodeImg.alt = 'QR Code de Pagamento';
             qrCodeContainer.appendChild(qrCodeImg);
+
+            const linkElement = document.createElement('a');
+            linkElement.href = data.init_point;
+            linkElement.target = '_blank';
+            linkElement.textContent = 'Abrir página de pagamento';
+            qrCodeContainer.appendChild(document.createElement('br'));
+            qrCodeContainer.appendChild(linkElement);
         } else {
             console.log('Nenhum QR Code recebido');
             qrCodeContainer.innerHTML = 'QR Code não disponível';

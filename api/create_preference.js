@@ -2,7 +2,7 @@ const mercadopago = require('mercadopago');
 const qrcode = require('qrcode');
 
 module.exports = async (req, res) => {
-    console.log('1. Recebida requisição para criar QR code de pagamento');
+    console.log('1. Recebida requisição para criar preferência de pagamento');
 
     if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
         console.error('2. ERRO: Token de acesso do Mercado Pago não configurado');
@@ -27,42 +27,51 @@ module.exports = async (req, res) => {
             return res.status(400).json({ error: 'Dados inválidos' });
         }
 
-        console.log('8. Criando QR code de pagamento');
-        const qrCodeResponse = await mercadopago.qr.create({
-            external_reference: "QR_CODE_PAYMENT",
+        const preference = {
             items: [
                 {
                     title: title,
                     unit_price: Number(price),
                     quantity: Number(quantity),
-                    currency_id: "BRL"
                 }
             ],
-            total_amount: Number(price) * Number(quantity),
-            description: `Pagamento para ${title}`,
-            expiration_date: new Date(Date.now() + 30 * 60000).toISOString(), // 30 minutos de validade
-        });
+            payment_methods: {
+                excluded_payment_types: [
+                    { id: "credit_card" }
+                ],
+                installments: 1
+            },
+            external_reference: "QR_CODE_PAYMENT",
+            expires: true,
+            expiration_date_from: new Date().toISOString(),
+            expiration_date_to: new Date(Date.now() + 30 * 60000).toISOString(), // 30 minutos de validade
+        };
+
+        console.log('8. Criando preferência de pagamento');
+        const response = await mercadopago.preferences.create(preference);
 
         console.log('9. Resposta do Mercado Pago recebida');
-        console.log('10. Resposta do Mercado Pago:', JSON.stringify(qrCodeResponse, null, 2));
+        console.log('10. Resposta do Mercado Pago:', JSON.stringify(response, null, 2));
 
-        if (!qrCodeResponse.qr_data) {
-            throw new Error('QR code data não recebido do Mercado Pago');
+        if (!response.body.id) {
+            throw new Error('ID da preferência não recebido do Mercado Pago');
         }
 
+        const qrCodeData = `https://www.mercadopago.com.br/qr/${response.body.id}`;
+
         console.log('11. Gerando imagem do QR code');
-        const qrCodeBase64 = await qrcode.toDataURL(qrCodeResponse.qr_data);
 
         console.log('12. QR code gerado com sucesso');
 
         console.log('13. Enviando resposta ao cliente');
         res.json({ 
-            qr_code: qrCodeResponse.qr_data,
-            qr_code_base64: qrCodeBase64.split(',')[1], // Remove o prefixo "data:image/png;base64,"
+            preference_id: response.body.id,
+            init_point: response.body.init_point,
+            qr_code: qrCodeData,
         });
         console.log('14. Resposta enviada com sucesso');
     } catch (error) {
-        console.error('15. ERRO ao criar QR code de pagamento:', error);
+        console.error('15. ERRO ao criar preferência de pagamento:', error);
         console.error('16. Stack do erro:', error.stack);
         res.status(500).json({ 
             error: 'Erro interno do servidor',
