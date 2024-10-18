@@ -23,7 +23,7 @@ document.getElementById('buyButton').addEventListener('click', async () => {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.error}, details: ${errorData.details}`);
+            throw new Error(`Erro ao criar preferência: ${errorData.error}`);
         }
 
         const data = await response.json();
@@ -38,7 +38,7 @@ document.getElementById('buyButton').addEventListener('click', async () => {
         qrCodeContainer.innerHTML = qr.createImgTag(5);
 
     } catch (error) {
-        console.error('Erro ao criar preferência:', error);
-        alert(`Ocorreu um erro ao gerar o QR Code. Por favor, tente novamente. Detalhes: ${error.message}`);
+        console.error('Erro:', error);
+        alert(`Ocorreu um erro. Por favor, tente novamente.`);
     }
 });

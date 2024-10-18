@@ -1,12 +1,8 @@
 const mercadopago = require('mercadopago');
 
 module.exports = async (req, res) => {
-    console.log('Recebida requisição para criar preferência');
-    console.log('Access Token:', process.env.MERCADO_PAGO_ACCESS_TOKEN);
-
     if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
-        console.error('Access Token não configurado');
-        return res.status(500).json({ error: 'Access Token não configurado' });
+        return res.status(500).json({ error: 'Configuração do servidor incompleta' });
     }
 
     mercadopago.configure({
@@ -14,14 +10,18 @@ module.exports = async (req, res) => {
     });
 
     try {
-        console.log('Dados recebidos:', req.body);
+        const { title, price, quantity } = req.body;
+
+        if (!title || typeof price !== 'number' || price <= 0 || !Number.isInteger(quantity) || quantity <= 0) {
+            return res.status(400).json({ error: 'Dados inválidos' });
+        }
 
         const preference = {
             items: [
                 {
-                    title: req.body.title,
-                    unit_price: Number(req.body.price),
-                    quantity: Number(req.body.quantity),
+                    title: title,
+                    unit_price: Number(price),
+                    quantity: Number(quantity),
                 }
             ],
             payment_methods: {
@@ -34,17 +34,14 @@ module.exports = async (req, res) => {
             binary_mode: true
         };
 
-        console.log('Preferência criada:', preference);
-
         const response = await mercadopago.preferences.create(preference);
-        console.log('Resposta do Mercado Pago:', response.body);
 
         res.json({ 
             id: response.body.id,
             init_point: response.body.init_point
         });
     } catch (error) {
-        console.error('Erro detalhado:', error);
-        res.status(500).json({ error: 'Erro ao criar preferência', details: error.message, stack: error.stack });
+        console.error('Erro:', error);
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
