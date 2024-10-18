@@ -1,11 +1,18 @@
 const mercadopago = require('mercadopago');
 
-mercadopago.configure({
-    access_token: process.env.MERCADO_PAGO_ACCESS_TOKEN
-});
-
 module.exports = async (req, res) => {
     console.log('Recebida requisição para criar preferência');
+    console.log('Access Token:', process.env.MERCADO_PAGO_ACCESS_TOKEN);
+
+    if (!process.env.MERCADO_PAGO_ACCESS_TOKEN) {
+        console.error('Access Token não configurado');
+        return res.status(500).json({ error: 'Access Token não configurado' });
+    }
+
+    mercadopago.configure({
+        access_token: process.env.MERCADO_PAGO_ACCESS_TOKEN
+    });
+
     try {
         const preference = {
             items: [
