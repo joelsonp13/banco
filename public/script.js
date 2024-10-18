@@ -39,13 +39,13 @@ document.getElementById('buyButton').addEventListener('click', async () => {
         // Gerar e exibir o QR code
         const qrCodeContainer = document.getElementById('qrCodeContainer');
         const qr = qrcode(0, 'L');
-        qr.addData(data.qr_code_url);
+        qr.addData(data.qr_code);
         qr.make();
         qrCodeContainer.innerHTML = qr.createImgTag(5);
 
         // Adicionar link abaixo do QR code
         const linkElement = document.createElement('p');
-        linkElement.innerHTML = `<a href="${data.qr_code_url}" target="_blank">Abrir link do pagamento</a>`;
+        linkElement.innerHTML = `<a href="${data.qr_code}" target="_blank">Abrir link do pagamento</a>`;
         qrCodeContainer.appendChild(linkElement);
 
     } catch (error) {
