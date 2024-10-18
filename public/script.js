@@ -25,18 +25,12 @@ document.getElementById('buyButton').addEventListener('click', async () => {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const contentType = response.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-            throw new TypeError("Oops, não recebemos JSON!");
-        }
+        const data = await response.json();
 
-        const preference = await response.json();
+        // Exibir o QR code
+        const qrCodeContainer = document.getElementById('qrCodeContainer');
+        qrCodeContainer.innerHTML = `<img src="${data.qr_code}" alt="QR Code para pagamento">`;
 
-        const qrCode = await mp.bricks().create("wallet", "qrCodeContainer", {
-            initialization: {
-                preferenceId: preference.id
-            }
-        });
     } catch (error) {
         console.error('Erro ao criar preferência:', error);
         alert('Ocorreu um erro ao gerar o QR Code. Por favor, tente novamente.');

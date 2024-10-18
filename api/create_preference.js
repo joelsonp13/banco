@@ -22,19 +22,32 @@ module.exports = async (req, res) => {
                     quantity: Number(req.body.quantity),
                 }
             ],
-            back_urls: {
-                success: `${req.headers.origin}/success`,
-                failure: `${req.headers.origin}/failure`,
-                pending: `${req.headers.origin}/pending`
+            payment_methods: {
+                excluded_payment_types: [
+                    { id: "credit_card" }
+                ],
+                installments: 1
             },
-            auto_return: 'approved',
+            external_reference: "QR_CODE_PAYMENT",
+            binary_mode: true
         };
 
         console.log('Preferência criada:', preference);
 
         const response = await mercadopago.preferences.create(preference);
         console.log('Resposta do Mercado Pago:', response.body);
-        res.json({ id: response.body.id });
+
+        // Gerar QR Code
+        const qrCode = await mercadopago.qr.create({
+            file_type: "image/png",
+            size: 500,
+            preference_id: response.body.id
+        });
+
+        res.json({ 
+            id: response.body.id,
+            qr_code: qrCode.response.qr_data
+        });
     } catch (error) {
         console.error('Erro ao criar preferência:', error);
         res.status(500).json({ error: 'Erro ao criar preferência', details: error.message });
