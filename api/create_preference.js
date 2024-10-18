@@ -44,14 +44,19 @@ module.exports = async (req, res) => {
 
         const response = await mercadopago.preferences.create(preference);
 
-        console.log('Resposta do Mercado Pago:', response.body);
+        console.log('Resposta do Mercado Pago:', JSON.stringify(response.body, null, 2));
 
-        // Gerar o QR code para pagamento
-        const qrCode = response.body.point_of_interaction.transaction_data.qr_code;
-        const qrCodeBase64 = response.body.point_of_interaction.transaction_data.qr_code_base64;
+        let qrCode = null;
+        let qrCodeBase64 = null;
+
+        if (response.body.point_of_interaction && response.body.point_of_interaction.transaction_data) {
+            qrCode = response.body.point_of_interaction.transaction_data.qr_code;
+            qrCodeBase64 = response.body.point_of_interaction.transaction_data.qr_code_base64;
+        }
 
         res.json({ 
             id: response.body.id,
+            init_point: response.body.init_point,
             qr_code: qrCode,
             qr_code_base64: qrCodeBase64
         });
