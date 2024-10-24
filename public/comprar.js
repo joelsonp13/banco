@@ -183,7 +183,7 @@ async function savePurchaseToFirebase(paymentId, product) {
             deliveryType: product.deliveryTypes || [],
             keyOptions: product.keyOptions || null,
             category: product.category,
-            originalPrice: product.originalPrice,
+            originalPrice: product.originalPrice || product.currentPrice, // Corrigido para evitar undefined
             discountApplied: product.discountPercentage > 0 ? product.discountPercentage : null
         });
 
