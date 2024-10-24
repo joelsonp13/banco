@@ -129,14 +129,27 @@ async function checkPaymentStatus(paymentId, product) {
 
             if (data.status === 'approved') {
                 clearInterval(statusCheckInterval);
-                await savePurchaseToFirebase(paymentId, product);
-                showPaymentConfirmation();
+                const purchaseId = await savePurchaseToFirebase(paymentId, product);
+                showPaymentConfirmation(purchaseId, product);
+                
+                // Enviar email de confirmação (implementar no backend)
+                await fetch('/api/send_purchase_confirmation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        purchaseId: purchaseId,
+                        userEmail: firebase.auth().currentUser.email,
+                        productName: product.name
+                    }),
+                });
             } else if (data.status === 'rejected' || data.status === 'cancelled') {
                 clearInterval(statusCheckInterval);
                 showPaymentError(data.status_detail);
             }
         } catch (error) {
-            console.error('Erro ao verificar status do pagamento:', error);
+            console.error('Erro ao verificar status:', error);
             clearInterval(statusCheckInterval);
             showPaymentError(error.message);
         }
@@ -150,10 +163,13 @@ async function savePurchaseToFirebase(paymentId, product) {
             throw new Error('Usuário não autenticado');
         }
 
+        const purchaseId = `PURCHASE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const db = firebase.firestore();
-        const purchaseRef = db.collection('purchases').doc(paymentId);
+        const purchaseRef = db.collection('purchases').doc(purchaseId);
 
+        // Salvar todas as informações da compra
         await purchaseRef.set({
+            purchaseId: purchaseId,
             userId: user.uid,
             userEmail: user.email,
             productId: product.id,
@@ -161,24 +177,47 @@ async function savePurchaseToFirebase(paymentId, product) {
             productPrice: product.currentPrice,
             purchaseDate: firebase.firestore.FieldValue.serverTimestamp(),
             paymentId: paymentId,
-            status: 'completed'
+            status: 'completed',
+            downloadUrl: product.downloadUrl || null,
+            downloadFileName: product.downloadFileName || null,
+            deliveryType: product.deliveryTypes || [],
+            keyOptions: product.keyOptions || null,
+            category: product.category,
+            originalPrice: product.originalPrice,
+            discountApplied: product.discountPercentage > 0 ? product.discountPercentage : null
         });
 
-        console.log('Compra salva no Firebase com sucesso');
+        console.log('Compra salva com sucesso:', purchaseId);
+        return purchaseId;
     } catch (error) {
-        console.error('Erro ao salvar compra no Firebase:', error);
+        console.error('Erro ao salvar compra:', error);
+        throw error;
     }
 }
 
-function showPaymentConfirmation() {
+function showPaymentConfirmation(purchaseId, product) {
     const qrCodeContainer = document.getElementById('qrCodeContainer');
+    let downloadButton = '';
+    
+    if (product.downloadUrl) {
+        downloadButton = `
+            <a href="${product.downloadUrl}" download="${product.downloadFileName}" 
+               class="mt-4 bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition-all duration-300 neon-border">
+                Baixar Produto
+            </a>
+        `;
+    }
+
     qrCodeContainer.innerHTML = `
         <div class="bg-green-500 text-white p-4 rounded-lg text-center">
-            <h3 class="text-2xl font-bold mb-2">Pagamento Confirmado com Sucesso!</h3>
+            <h3 class="text-2xl font-bold mb-2">Pagamento Confirmado!</h3>
             <p>Seu pagamento foi processado e confirmado.</p>
-            <p class="mt-2">Os detalhes da sua compra foram salvos.</p>
+            <p class="mt-2">ID da compra: ${purchaseId}</p>
+            ${downloadButton}
+            <p class="mt-4 text-sm">Um email com os detalhes da compra foi enviado para você.</p>
         </div>
     `;
+    
     gsap.from(qrCodeContainer.children, {duration: 0.5, opacity: 0, y: 20, ease: "power2.out"});
 }
 

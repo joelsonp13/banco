@@ -25,6 +25,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let isProcessing = false; // Flag para evitar múltiplas submissões
 
+    const deliveryKey = document.getElementById('deliveryKey');
+    const deliveryDownload = document.getElementById('deliveryDownload');
+    const keyOptions = document.getElementById('keyOptions');
+    const downloadOptions = document.getElementById('downloadOptions');
+
+    deliveryKey.addEventListener('change', () => {
+        keyOptions.classList.toggle('hidden', !deliveryKey.checked);
+    });
+
+    deliveryDownload.addEventListener('change', () => {
+        downloadOptions.classList.toggle('hidden', !deliveryDownload.checked);
+    });
+
     // Verificar se o usuário está logado e tem permissão de vendedor
     firebase.auth().onAuthStateChanged((user) => {
         if (user) {
@@ -129,6 +142,76 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Função para aplicar desconto
+    function applyDiscount(price, discount) {
+        return price * (1 - discount / 100);
+    }
+
+    // Aplicar desconto
+    applyDiscountBtn.addEventListener('click', () => {
+        if (isProcessing) return;
+        isProcessing = true;
+        toggleLoading(true);
+
+        const discount = parseFloat(discountPercentage.value);
+        if (isNaN(discount) || discount < 0 || discount > 100) {
+            showFeedback('Por favor, insira um valor de desconto válido entre 0 e 100.', 'error');
+            isProcessing = false;
+            toggleLoading(false);
+            return;
+        }
+
+        // Aplicar desconto ao preço principal
+        const mainPrice = parseFloat(document.getElementById('productPrice').value);
+        document.getElementById('productPrice').value = applyDiscount(mainPrice, discount).toFixed(2);
+
+        // Aplicar desconto às opções de chave
+        const keyDurations = ['1day', '1week', '1month', 'lifetime'];
+        keyDurations.forEach(duration => {
+            const priceInput = document.querySelector(`input[name="keyPrice${duration}"]`);
+            if (priceInput) {
+                const originalPrice = parseFloat(priceInput.value);
+                if (!isNaN(originalPrice)) {
+                    priceInput.value = applyDiscount(originalPrice, discount).toFixed(2);
+                }
+            }
+        });
+
+        isDiscounted = true;
+        showFeedback('Desconto aplicado com sucesso!');
+        isProcessing = false;
+        toggleLoading(false);
+    });
+
+    // Remover desconto
+    const removeDiscountBtn = document.createElement('button');
+    removeDiscountBtn.textContent = 'Remover Desconto';
+    removeDiscountBtn.className = 'ml-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700';
+    removeDiscountBtn.addEventListener('click', () => {
+        if (isProcessing) return;
+        isProcessing = true;
+        toggleLoading(true);
+
+        // Restaurar preço principal
+        document.getElementById('productPrice').value = originalPrice.toFixed(2);
+
+        // Restaurar preços das opções de chave
+        const keyDurations = ['1day', '1week', '1month', 'lifetime'];
+        keyDurations.forEach(duration => {
+            const priceInput = document.querySelector(`input[name="keyPrice${duration}"]`);
+            if (priceInput && priceInput.dataset.originalPrice) {
+                priceInput.value = priceInput.dataset.originalPrice;
+            }
+        });
+
+        discountPercentage.value = '';
+        isDiscounted = false;
+        showFeedback('Desconto removido com sucesso!');
+        isProcessing = false;
+        toggleLoading(false);
+    });
+    discountSection.appendChild(removeDiscountBtn);
+
     // Função para criar ou editar um produto
     productForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -139,11 +222,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const user = firebase.auth().currentUser;
         if (!user) return;
 
-        const productName = document.getElementById('productName').value.trim();
-        const productDescription = document.getElementById('productDescription').value.trim();
-        const productPrice = parseFloat(document.getElementById('productPrice').value);
-        const productCategory = document.getElementById('productCategory').value;
-        const productImage = document.getElementById('productImage').files[0];
+        const productName = document.getElementById('productName')?.value.trim() || '';
+        const productDescription = document.getElementById('productDescription')?.value.trim() || '';
+        const productPrice = parseFloat(document.getElementById('productPrice')?.value || '0');
+        const productCategory = document.getElementById('productCategory')?.value || '';
+        const productImage = document.getElementById('productImage')?.files[0];
 
         // Validação
         if (!productName || !productDescription || isNaN(productPrice) || !productCategory) {
@@ -152,6 +235,8 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleLoading(false);
             return;
         }
+
+        const downloadFile = document.getElementById('downloadFiles')?.files[0];
 
         try {
             let imageUrl = '';
@@ -175,11 +260,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            const deliveryTypes = [];
+            if (deliveryKey?.checked) deliveryTypes.push('key');
+            if (deliveryDownload?.checked) deliveryTypes.push('download');
+
+            const keyOptions = [];
+            if (deliveryKey?.checked) {
+                document.querySelectorAll('input[name="keyDuration"]:checked').forEach(input => {
+                    const duration = input.value;
+                    const priceInput = document.querySelector(`input[name="keyPrice${duration}"]`);
+                    if (priceInput) {
+                        const price = parseFloat(priceInput.value);
+                        const originalPrice = parseFloat(priceInput.dataset.originalPrice || price);
+                        if (!isNaN(price)) {
+                            keyOptions.push({ duration, price, originalPrice });
+                        }
+                    }
+                });
+            }
+
             const productData = {
                 name: productName,
                 description: productDescription,
                 category: productCategory,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                deliveryTypes: deliveryTypes,
+                keyOptions: keyOptions,
+                discountPercentage: isDiscounted ? parseFloat(discountPercentage?.value || '0') : 0
             };
 
             if (editingProductId) {
@@ -190,7 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Se há desconto, mantenha o preço original e atualize o preço com desconto
                     productData.originalPrice = oldData.originalPrice;
                     productData.currentPrice = productPrice;
-                    productData.discountPercentage = parseFloat(discountPercentage.value);
+                    productData.discountPercentage = parseFloat(discountPercentage?.value || '0');
                 } else {
                     // Se não há desconto, atualize apenas o preço atual
                     productData.originalPrice = productPrice;
@@ -207,6 +314,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (imageUrl) {
                 productData.imageUrl = imageUrl;
             }
+
+            // Upload do arquivo de download
+            let downloadUrl = '';
+            let downloadFileName = '';
+            if (downloadFile) {
+                const storageRef = firebase.storage().ref();
+                const fileRef = storageRef.child(`download_files/${Date.now()}_${downloadFile.name}`);
+                const snapshot = await fileRef.put(downloadFile);
+                downloadUrl = await snapshot.ref.getDownloadURL();
+                downloadFileName = downloadFile.name;
+            }
+
+            // Adicionar downloadUrl aos dados do produto
+            productData.downloadUrl = downloadUrl;
+            productData.downloadFileName = downloadFileName;
 
             if (editingProductId) {
                 await db.collection('produtos').doc(editingProductId).update(productData);
@@ -249,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const product = { id: doc.id, ...doc.data() };
                 const li = document.createElement('li');
                 li.className = 'bg-gray-700 p-4 rounded-lg flex items-center justify-between';
-                updateProductDisplay(li, product);
+                li.innerHTML = createProductHTML(product);
                 productList.appendChild(li);
             });
 
@@ -272,6 +394,33 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             toggleLoading(false);
         }
+    }
+
+    // Função para criar o HTML de exibição do produto
+    function createProductHTML(product) {
+        const originalPrice = product.originalPrice || product.currentPrice || 0;
+        const currentPrice = product.currentPrice || 0;
+        const discountPercentage = product.discountPercentage || 0;
+
+        const priceDisplay = discountPercentage > 0
+            ? `<p class="text-sm line-through text-red-500">R$ ${originalPrice.toFixed(2)}</p>
+               <p class="text-sm text-green-500">R$ ${currentPrice.toFixed(2)}</p>`
+            : `<p class="text-sm text-gray-300">R$ ${currentPrice.toFixed(2)}</p>`;
+
+        return `
+            <div class="flex items-center">
+                <img src="${product.imageUrl || 'https://via.placeholder.com/150'}" alt="${product.name}" class="w-16 h-16 object-cover rounded mr-4">
+                <div>
+                    <h4 class="text-lg font-semibold">${product.name}</h4>
+                    ${priceDisplay}
+                    <p class="text-xs text-gray-400">${product.category || 'Sem categoria'}</p>
+                </div>
+            </div>
+            <div>
+                <button class="editProduct bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 mr-2" data-id="${product.id}">Editar</button>
+                <button class="deleteProduct bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700" data-id="${product.id}">Excluir</button>
+            </div>
+        `;
     }
 
     // Função para editar um produto
@@ -299,6 +448,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 isDiscounted = product.discountPercentage > 0;
                 window.scrollTo(0, 0);
                 showFeedback('Produto carregado para edição.');
+
+                // Preencher opções de chave e salvar preços originais
+                if (product.keyOptions) {
+                    product.keyOptions.forEach(option => {
+                        const durationInput = document.querySelector(`input[name="keyDuration"][value="${option.duration}"]`);
+                        const priceInput = document.querySelector(`input[name="keyPrice${option.duration}"]`);
+                        if (durationInput && priceInput) {
+                            durationInput.checked = true;
+                            priceInput.value = option.price.toFixed(2);
+                            priceInput.dataset.originalPrice = option.originalPrice.toFixed(2);
+                        }
+                    });
+                }
             }
         } catch (error) {
             console.error('Erro ao carregar produto para edição:', error);
@@ -316,8 +478,28 @@ document.addEventListener('DOMContentLoaded', () => {
             isProcessing = true;
             toggleLoading(true);
             try {
+                // Obter os dados do produto antes de excluí-lo
+                const productDoc = await db.collection('produtos').doc(productId).get();
+                const productData = productDoc.data();
+
+                if (productData) {
+                    // Excluir a imagem do produto do Storage
+                    if (productData.imageUrl) {
+                        const imageRef = firebase.storage().refFromURL(productData.imageUrl);
+                        await imageRef.delete();
+                    }
+
+                    // Excluir o arquivo de download do Storage, se existir
+                    if (productData.downloadUrl) {
+                        const downloadRef = firebase.storage().refFromURL(productData.downloadUrl);
+                        await downloadRef.delete();
+                    }
+                }
+
+                // Excluir o documento do produto do Firestore
                 await db.collection('produtos').doc(productId).delete();
-                showFeedback('Produto excluído com sucesso!');
+
+                showFeedback('Produto e arquivos associados excluídos com sucesso!');
                 if (editingProductId === productId) {
                     resetForm();
                 }
@@ -347,75 +529,6 @@ document.addEventListener('DOMContentLoaded', () => {
             button.addEventListener('click', () => loadProducts(i));
             paginationContainer.appendChild(button);
         }
-    }
-
-    // Aplicar desconto
-    applyDiscountBtn.addEventListener('click', () => {
-        if (isProcessing) return;
-        isProcessing = true;
-        toggleLoading(true);
-
-        const discount = parseFloat(discountPercentage.value);
-        if (isNaN(discount) || discount < 0 || discount > 100) {
-            showFeedback('Por favor, insira um valor de desconto válido entre 0 e 100.', 'error');
-            isProcessing = false;
-            toggleLoading(false);
-            return;
-        }
-
-        const discountedPrice = originalPrice * (1 - discount / 100);
-        document.getElementById('productPrice').value = discountedPrice.toFixed(2);
-        currentPrice = discountedPrice;
-        isDiscounted = true;
-        showFeedback('Desconto aplicado com sucesso!');
-        isProcessing = false;
-        toggleLoading(false);
-    });
-
-    // Remover desconto
-    const removeDiscountBtn = document.createElement('button');
-    removeDiscountBtn.textContent = 'Remover Desconto';
-    removeDiscountBtn.className = 'ml-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700';
-    removeDiscountBtn.addEventListener('click', () => {
-        if (isProcessing) return;
-        isProcessing = true;
-        toggleLoading(true);
-
-        document.getElementById('productPrice').value = originalPrice.toFixed(2);
-        discountPercentage.value = '';
-        currentPrice = originalPrice;
-        isDiscounted = false;
-        showFeedback('Desconto removido com sucesso!');
-        isProcessing = false;
-        toggleLoading(false);
-    });
-    discountSection.appendChild(removeDiscountBtn);
-
-    // Atualizar a exibição do produto na lista
-    function updateProductDisplay(li, product) {
-        const originalPrice = product.originalPrice || product.currentPrice || 0;
-        const currentPrice = product.currentPrice || 0;
-        const discountPercentage = product.discountPercentage || 0;
-
-        const priceDisplay = discountPercentage > 0
-            ? `<p class="text-sm line-through text-red-500">R$ ${originalPrice.toFixed(2)}</p>
-               <p class="text-sm text-green-500">R$ ${currentPrice.toFixed(2)}</p>`
-            : `<p class="text-sm text-gray-300">R$ ${currentPrice.toFixed(2)}</p>`;
-
-        li.innerHTML = `
-            <div class="flex items-center">
-                <img src="${product.imageUrl || 'https://via.placeholder.com/150'}" alt="${product.name}" class="w-16 h-16 object-cover rounded mr-4">
-                <div>
-                    <h4 class="text-lg font-semibold">${product.name}</h4>
-                    ${priceDisplay}
-                    <p class="text-xs text-gray-400">${product.category || 'Sem categoria'}</p>
-                </div>
-            </div>
-            <div>
-                <button class="editProduct bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 mr-2" data-id="${product.id}">Editar</button>
-                <button class="deleteProduct bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700" data-id="${product.id}">Excluir</button>
-            </div>
-        `;
     }
 
     // Função para resetar o formulário

@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const productDetails = document.getElementById('productDetails');
     const reviewsList = document.getElementById('reviewsList');
-    const reviewForm = document.getElementById('reviewForm');
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
 
@@ -94,8 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const snapshot = await firebase.firestore().collection('reviews')
                 .where('productId', '==', productId)
-                .orderBy('createdAt', 'desc')
-                .limit(10)
                 .get();
 
             reviewsData = snapshot.docs.map(doc => doc.data());
@@ -103,23 +100,55 @@ document.addEventListener('DOMContentLoaded', () => {
             animateReviews();
         } catch (error) {
             console.error('Erro ao carregar avaliações:', error);
+            reviewsList.innerHTML = '<p class="text-red-500">Erro ao carregar avaliações. Por favor, tente novamente mais tarde.</p>';
         }
     }
 
     function displayReviews() {
-        reviewsList.innerHTML = reviewsData.map(review => `
-            <div class="review-card bg-gray-700 p-4 rounded mb-2">
-                <p class="text-gray-300">${review.text}</p>
-                <p class="text-sm text-gray-400">Por: ${review.userName}</p>
-            </div>
-        `).join('');
+        if (reviewsData.length === 0) {
+            reviewsList.innerHTML = '<p class="text-gray-400">Ainda não há avaliações para este produto.</p>';
+        } else {
+            reviewsList.innerHTML = reviewsData.map(review => `
+                <div class="review-card bg-gray-700 p-4 rounded mb-2">
+                    <p class="text-gray-300">${review.text}</p>
+                    <p class="text-sm text-gray-400">Por: ${review.userName}</p>
+                </div>
+            `).join('');
+        }
     }
 
     function displayProductDetails(product) {
         const priceDisplay = product.discountPercentage > 0
-            ? `<p class="text-2xl font-bold text-green-500">R$ ${product.currentPrice.toFixed(2)}</p>
+            ? `<p class="text-2xl font-bold text-green-500" id="productPrice">R$ ${product.currentPrice.toFixed(2)}</p>
                <p class="text-lg line-through text-red-500">R$ ${product.originalPrice.toFixed(2)}</p>`
-            : `<p class="text-2xl font-bold text-blue-400">R$ ${product.currentPrice.toFixed(2)}</p>`;
+            : `<p class="text-2xl font-bold text-blue-400" id="productPrice">R$ ${product.currentPrice.toFixed(2)}</p>`;
+
+        function translateDuration(duration) {
+            const translations = {
+                '1day': '1 dia',
+                '1week': '1 semana',
+                '1month': '1 mês',
+                'lifetime': 'Vitalício'
+            };
+            return translations[duration] || duration;
+        }
+
+        const keyOptionsHtml = product.keyOptions && product.keyOptions.length > 0
+            ? `<div class="mt-4">
+                <h3 class="text-xl font-bold text-blue-400 mb-2">Escolha a duração:</h3>
+                <select id="durationSelect" class="w-full p-2 bg-gray-800 text-white rounded border border-blue-500 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                    ${product.keyOptions.map(option => `
+                        <option value="${option.duration}" data-price="${option.price}">
+                            ${translateDuration(option.duration)} - R$ ${option.price.toFixed(2)}
+                        </option>
+                    `).join('')}
+                </select>
+               </div>`
+            : '';
+
+        const downloadInfo = product.deliveryTypes && product.deliveryTypes.includes('download')
+            ? '<p class="text-green-500 mt-2">Download disponível</p>'
+            : '<p class="text-red-500 mt-2">Download não disponível</p>';
 
         productDetails.innerHTML = `
             <div class="flex flex-col md:flex-row">
@@ -131,13 +160,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${priceDisplay}
                     <p class="text-gray-300 my-4">${product.description}</p>
                     <p class="text-sm text-gray-400 mb-4">Categoria: ${product.category || 'Sem categoria'}</p>
-                    <button id="buyNowBtn" class="buy-now bg-green-600 text-white px-6 py-3 rounded-full hover:bg-green-700 transition-all duration-300 neon-border">Comprar Agora</button>
+                    ${keyOptionsHtml}
+                    ${downloadInfo}
+                    <button id="buyNowBtn" class="buy-now bg-green-600 text-white px-6 py-3 rounded-full hover:bg-green-700 transition-all duration-300 neon-border mt-4">Comprar Agora</button>
                 </div>
             </div>
         `;
 
         const buyNowBtn = document.getElementById('buyNowBtn');
         buyNowBtn.addEventListener('click', () => buyNow(product));
+
+        const durationSelect = document.getElementById('durationSelect');
+        if (durationSelect) {
+            durationSelect.addEventListener('change', (e) => {
+                const selectedOption = e.target.options[e.target.selectedIndex];
+                const newPrice = parseFloat(selectedOption.dataset.price);
+                document.getElementById('productPrice').textContent = `R$ ${newPrice.toFixed(2)}`;
+                product.selectedDuration = e.target.value;
+                product.currentPrice = newPrice;
+            });
+            // Trigger change event to set initial price and duration
+            durationSelect.dispatchEvent(new Event('change'));
+        }
     }
 
     function buyNow(product) {
@@ -148,7 +192,9 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPrice: product.currentPrice,
             imageUrl: product.imageUrl,
             description: product.description,
-            category: product.category
+            category: product.category,
+            selectedDuration: product.selectedDuration, // Adicionando a duração selecionada
+            deliveryTypes: product.deliveryTypes
         }));
 
         window.location.href = `comprar.html?data=${encryptedData}`;
