@@ -201,7 +201,7 @@ function showPaymentConfirmation(purchaseId, product) {
     
     if (product.downloadUrl) {
         downloadButton = `
-            <a href="${product.downloadUrl}" download="${product.downloadFileName}" 
+            <a href="${product.downloadUrl}" download="${product.downloadFileName || 'produto'}" 
                class="mt-4 bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition-all duration-300 neon-border">
                 Baixar Produto
             </a>
