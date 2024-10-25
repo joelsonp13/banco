@@ -1,15 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM carregado');
-
     // Verifique se o Firebase está inicializado
     if (typeof firebase === 'undefined') {
-        console.error('Firebase não está definido. Verifique se os scripts do Firebase foram carregados corretamente.');
         return;
     }
 
     // Verifique se editProduct está definido
     if (typeof window.editProduct === 'undefined') {
-        console.error('A função editProduct não está definida. Verifique se editarprodutos.js foi carregado corretamente.');
         return;
     }
 
@@ -20,32 +16,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const editContentBtn = document.getElementById('editContentBtn');
     let isEditMode = false;
 
-    console.log('Elementos DOM obtidos');
-
     // Verificar se o usuário está logado e tem permissão de vendedor
     firebase.auth().onAuthStateChanged((user) => {
-        console.log('Estado de autenticação alterado');
         if (user) {
-            console.log('Usuário logado:', user.email);
             userDisplay.textContent = `Olá, ${user.displayName || user.email}!`;
             
             // Verificar se o usuário tem permissão de vendedor
             db.collection('usuarios').doc(user.uid).get().then((doc) => {
-                console.log('Documento do usuário obtido');
                 if (doc.exists && doc.data().isVendedor === true) {
-                    console.log('Usuário é vendedor');
                     vendorAreaBtn.classList.remove('hidden');
-                    editContentBtn.classList.remove('hidden'); // Mostra o botão "Editar Conteúdo"
+                    editContentBtn.classList.remove('hidden');
                 } else {
-                    console.log('Usuário não é vendedor');
                     vendorAreaBtn.classList.add('hidden');
-                    editContentBtn.classList.add('hidden'); // Esconde o botão "Editar Conteúdo"
+                    editContentBtn.classList.add('hidden');
                 }
             }).catch((error) => {
-                console.error("Erro ao verificar permissões:", error);
+                showFeedback('Erro ao verificar permissões', 'error');
             });
         } else {
-            console.log('Usuário não está logado, redirecionando para login');
             window.location.href = 'login.html';
         }
     });
@@ -55,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
         firebase.auth().signOut().then(() => {
             window.location.href = 'login.html';
         }).catch((error) => {
-            console.error('Erro ao fazer logout:', error);
+            showFeedback('Erro ao fazer logout', 'error');
         });
     });
 
@@ -271,48 +259,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Função para carregar e exibir produtos
     async function loadProducts() {
-        console.log('Iniciando carregamento de produtos');
         const productGrid = document.querySelector('.grid');
         if (!productGrid) {
-            console.error('Elemento .grid não encontrado');
             return;
         }
         productGrid.innerHTML = ''; // Limpa o grid existente
 
         try {
-            console.log('Tentando acessar o Firestore');
             if (!db) {
-                console.error('Instância do Firestore não encontrada');
                 return;
             }
-            console.log('Buscando produtos no Firestore');
             const snapshot = await db.collection('produtos').get();
-            console.log('Snapshot recebido:', snapshot);
             if (snapshot.empty) {
-                console.log('Nenhum produto encontrado');
                 showFeedback('Nenhum produto encontrado.', 'info');
                 return;
             }
 
             snapshot.forEach((doc) => {
                 const product = { id: doc.id, ...doc.data() };
-                console.log('Produto:', product);
                 const productCard = createProductCard(product);
                 productGrid.appendChild(productCard);
             });
 
-            console.log('Produtos carregados, aplicando efeitos visuais');
             applyVisualEffects();
             applyInteractiveCursorEffect(); // Adicione esta linha
         } catch (error) {
-            console.error('Erro ao carregar produtos:', error);
             showFeedback('Erro ao carregar produtos. Por favor, recarregue a página.', 'error');
         }
     }
 
     // Função para criar um card de produto
     function createProductCard(product) {
-        console.log('Criando card para o produto:', product.name);
         const card = document.createElement('div');
         card.className = 'product-card bg-gray-800 rounded-lg overflow-hidden shadow-lg transition-transform duration-300 hover:scale-105 flex flex-col h-full cursor-pointer';
         card.dataset.productId = product.id;
@@ -433,10 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 
-    console.log('Chamando loadProducts');
     loadProducts();
-
-    console.log('Script principal.js concluído');
 
     editContentBtn.addEventListener('click', () => {
         // Verificar novamente se o usuário tem permissão antes de ativar o modo de edição
@@ -457,11 +431,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             deactivateEditMode();
                         }
                     } else {
-                        console.log('Usuário não tem permissão para editar conteúdo');
                         showFeedback('Você não tem permissão para editar o conteúdo.', 'error');
                     }
                 }).catch((error) => {
-                    console.error("Erro ao verificar permissões:", error);
+                    showFeedback('Erro ao verificar permissões', 'error');
                 });
             }
         });
@@ -519,14 +492,13 @@ document.addEventListener('DOMContentLoaded', () => {
             editBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const productId = card.dataset.productId;
-                console.log('Editando produto:', productId);
-                window.editProduct(productId);  // Use window.editProduct aqui
+                window.editProduct(productId);
             });
             
             deleteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const productId = card.dataset.productId;
-                window.deleteProduct(productId);  // Use window.deleteProduct aqui
+                window.deleteProduct(productId);
             });
         });
     }

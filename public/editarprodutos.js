@@ -1,6 +1,4 @@
 (function() {
-    console.log('Iniciando editarprodutos.js');
-
     // Verifique se o Firebase já foi inicializado
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
@@ -10,19 +8,14 @@
     const db = firebase.firestore();
     const storage = firebase.storage();
 
-    console.log('Firebase inicializado, db e storage obtidos');
-
     // Declare as variáveis globais
     let isProcessing = false;
     let originalPrice = 0;
     let currentPrice = 0;
     let isDiscounted = false;
 
-    console.log('Variáveis globais inicializadas');
-
     // Defina as funções globalmente
     window.editProduct = function(productId) {
-        console.log('Função editProduct chamada com ID:', productId);
         if (isProcessing) return;
         isProcessing = true;
         toggleLoading(true);
@@ -30,14 +23,11 @@
         db.collection('produtos').doc(productId).get().then((doc) => {
             if (doc.exists) {
                 const product = doc.data();
-                console.log('Dados do produto recuperados:', product);
                 openEditModal(productId, product);
             } else {
-                console.log("Produto não encontrado");
                 showFeedback("Produto não encontrado", "error");
             }
         }).catch((error) => {
-            console.error("Erro ao obter o produto:", error);
             showFeedback("Erro ao obter o produto. Tente novamente.", "error");
         }).finally(() => {
             isProcessing = false;
@@ -51,49 +41,45 @@
             isProcessing = true;
             toggleLoading(true);
             try {
-                // Obter o usuário atual
                 const user = firebase.auth().currentUser;
                 if (!user) {
                     throw new Error('Usuário não autenticado');
                 }
 
-                // Obter os dados do usuário do Firestore
                 const userDoc = await db.collection('usuarios').doc(user.uid).get();
                 if (!userDoc.exists) {
                     throw new Error('Documento do usuário não encontrado');
                 }
                 const userData = userDoc.data();
 
-                // Verificar se o usuário é um vendedor
                 if (!userData.isVendedor) {
                     throw new Error('Usuário não é um vendedor');
                 }
 
-                // Obter os dados do produto
                 const productDoc = await db.collection('produtos').doc(productId).get();
                 if (!productDoc.exists) {
                     throw new Error('Produto não encontrado');
                 }
-                const productData = productDoc.data();
 
-                console.log('Dados do usuário:', userData);
-                console.log('Dados do produto:', productData);
-                console.log('UID do usuário:', user.uid);
-                console.log('createdBy do produto:', productData.createdBy);
-
-                // Tentar excluir o produto
                 await db.collection('produtos').doc(productId).delete();
-                console.log("Produto excluído com sucesso");
                 document.querySelector(`[data-product-id="${productId}"]`).remove();
                 showFeedback('Produto excluído com sucesso!');
             } catch (error) {
-                console.error("Erro detalhado ao excluir o produto:", error);
                 showFeedback('Erro ao excluir produto. Por favor, tente novamente.', 'error');
             } finally {
                 isProcessing = false;
                 toggleLoading(false);
             }
         });
+    }
+
+    async function deleteImage(imageUrl) {
+        try {
+            const imageRef = storage.refFromURL(imageUrl);
+            await imageRef.delete();
+        } catch (error) {
+            showFeedback('Erro ao deletar imagem antiga', 'error');
+        }
     }
 
     function openEditModal(productId, product) {
@@ -198,10 +184,8 @@
         toggleLoading(true);
 
         const productId = e.target.dataset.productId;
-        console.log('Atualizando produto com ID:', productId);
 
         if (!productId) {
-            console.error('ID do produto não encontrado');
             showFeedback("Erro: ID do produto não encontrado", "error");
             isProcessing = false;
             toggleLoading(false);
@@ -244,12 +228,10 @@
             }
 
             await db.collection('produtos').doc(productId).update(updatedProduct);
-            console.log("Produto atualizado com sucesso");
             document.querySelector('.fixed').remove();
             updateProductCard(productId, updatedProduct);
             showFeedback("Produto atualizado com sucesso!", "success");
         } catch (error) {
-            console.error("Erro ao atualizar o produto:", error);
             showFeedback("Erro ao atualizar o produto. Tente novamente.", "error");
         } finally {
             isProcessing = false;
@@ -262,16 +244,6 @@
         const fileRef = storageRef.child(`product_images/${Date.now()}_${file.name}`);
         await fileRef.put(file);
         return await fileRef.getDownloadURL();
-    }
-
-    async function deleteImage(imageUrl) {
-        try {
-            const imageRef = storage.refFromURL(imageUrl);
-            await imageRef.delete();
-            console.log('Imagem antiga deletada com sucesso');
-        } catch (error) {
-            console.error('Erro ao deletar imagem antiga:', error);
-        }
     }
 
     function applyDiscount() {
@@ -419,6 +391,4 @@
     window.toggleLoading = toggleLoading;
     window.showConfirmModal = showConfirmModal;
     window.showFeedback = showFeedback;
-
-    console.log('Funções editProduct e deleteProduct definidas globalmente');
 })();

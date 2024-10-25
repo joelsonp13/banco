@@ -78,17 +78,14 @@ document.addEventListener('DOMContentLoaded', () => {
             .then((doc) => {
                 if (doc.exists) {
                     const product = doc.data();
-                    product.id = doc.id; // Garantir que o ID do documento seja incluído
-                    console.log('Produto carregado:', product); // Para depuração
+                    product.id = doc.id;
                     displayProductDetails(product);
                     return product;
                 } else {
-                    console.log('Produto não encontrado');
                     throw new Error('Produto não encontrado');
                 }
             })
             .catch((error) => {
-                console.error('Erro ao carregar detalhes do produto:', error);
                 productDetails.innerHTML = '<p class="text-red-500">Erro ao carregar detalhes do produto.</p>';
             });
     }
@@ -194,11 +191,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     await firebase.firestore().collection('reviews').doc(reviewId).update({
                         text: newText
                     });
-                    console.log('Comentário editado com sucesso');
                     reviewTextElement.textContent = newText;
                     editContainer.replaceWith(reviewTextElement);
+                    showFeedback('Comentário editado com sucesso', 'success');
                 } catch (error) {
-                    console.error('Erro ao editar comentário:', error);
+                    showFeedback('Erro ao editar comentário', 'error');
                 }
             }
         });
@@ -211,16 +208,10 @@ document.addEventListener('DOMContentLoaded', () => {
     window.deleteComment = async function(reviewId) {
         try {
             await firebase.firestore().collection('reviews').doc(reviewId).delete();
-            console.log('Comentário removido com sucesso');
-            
-            // Atualiza a lista local de reviews
             reviewsData = reviewsData.filter(review => review.id !== reviewId);
             displayReviews();
-            
-            // Mostra feedback visual
             showFeedback('Comentário removido com sucesso', 'success');
         } catch (error) {
-            console.error('Erro ao remover comentário:', error);
             showFeedback('Erro ao remover comentário', 'error');
         }
     }
@@ -294,7 +285,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function buyNow(product) {
-        console.log('Produto sendo enviado para compra:', product); // Para depuração
         const encryptedData = btoa(JSON.stringify({
             id: product.id,
             name: product.name,
@@ -302,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
             imageUrl: product.imageUrl,
             description: product.description,
             category: product.category,
-            selectedDuration: product.selectedDuration, // Adicionando a duração selecionada
+            selectedDuration: product.selectedDuration,
             deliveryTypes: product.deliveryTypes
         }));
 
