@@ -48,6 +48,9 @@
             box-shadow: 0 0 20px rgba(0, 0, 255, 0.5);
         }
         .zoom-image {
+            width: 100%;
+            height: 300px; /* Define a altura padrão para as imagens */
+            object-fit: cover; /* Garante que a imagem se ajuste ao contêiner */
             transition: transform 0.3s ease;
         }
         .zoom-image:hover {
@@ -85,6 +88,74 @@
         .review-card:hover {
             background: rgba(0, 0, 20, 0.8);
         }
+        .neon-button {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: 2px solid #0000ff;
+            color: #0000ff;
+            background-color: transparent;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 5px #fff, 0 0 10px #0000ff, 0 0 15px #0000ff, 0 0 20px #0000ff, 0 0 35px #0000ff, 0 0 40px #0000ff;
+        }
+        .neon-button:hover {
+            color: #fff;
+            background-color: #0000ff;
+            box-shadow: 0 0 10px #fff, 0 0 20px #0000ff, 0 0 30px #0000ff, 0 0 40px #0000ff;
+        }
+        .neon-button-red {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: 2px solid #ff0000;
+            color: #ff0000;
+            background-color: transparent;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 5px #fff, 0 0 10px #ff0000, 0 0 15px #ff0000, 0 0 20px #ff0000, 0 0 35px #ff0000, 0 0 40px #ff0000;
+        }
+        .neon-button-red:hover {
+            color: #fff;
+            background-color: #ff0000;
+            box-shadow: 0 0 10px #fff, 0 0 20px #ff0000, 0 0 30px #ff0000, 0 0 40px #ff0000;
+        }
+        .neon-button-sm {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid #0000ff;
+            color: #0000ff;
+            background-color: transparent;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 5px #fff, 0 0 10px #0000ff, 0 0 15px #0000ff, 0 0 20px #0000ff, 0 0 35px #0000ff, 0 0 40px #0000ff;
+        }
+        .neon-button-sm:hover {
+            color: #fff;
+            background-color: #0000ff;
+            box-shadow: 0 0 10px #fff, 0 0 20px #0000ff, 0 0 30px #0000ff, 0 0 40px #0000ff;
+        }
+        .neon-button-red-sm {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            border: 2px solid #ff0000;
+            color: #ff0000;
+            background-color: transparent;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 5px #fff, 0 0 10px #ff0000, 0 0 15px #ff0000, 0 0 20px #ff0000, 0 0 35px #ff0000, 0 0 40px #ff0000;
+        }
+        .neon-button-red-sm:hover {
+            color: #fff;
+            background-color: #ff0000;
+            box-shadow: 0 0 10px #fff, 0 0 20px #ff0000, 0 0 30px #ff0000, 0 0 40px #ff0000;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col bg-gray-900">
@@ -104,8 +175,7 @@
                 <div class="absolute right-0 mt-2 w-48 bg-black bg-opacity-90 rounded-md shadow-lg hidden group-hover:block z-50">
                     <a href="principal.html" class="block px-4 py-2 text-sm text-blue-300 hover:bg-blue-600 hover:text-white">Loja</a>
                     <a href="#" class="block px-4 py-2 text-sm text-blue-300 hover:bg-blue-600 hover:text-white">Carrinho</a>
-                    <a href="#" class="block px-4 py-2 text-sm text-blue-300 hover:bg-blue-600 hover:text-white">Perfil</a>
-                    <a href="#" class="block px-4 py-2 text-sm text-blue-300 hover:bg-blue-600 hover:text-white">Sair</a>
+                    <a href="perfil.html" class="block px-4 py-2 text-sm text-blue-300 hover:bg-blue-600 hover:text-white">Perfil</a>
                 </div>
             </div>
         </nav>

@@ -11,24 +11,27 @@ document.addEventListener('DOMContentLoaded', () => {
         scaleMobile: 1.00,
         color: 0x0000ff,
         backgroundColor: 0x000000,
-        points: 20.00,
-        maxDistance: 30.00,
-        spacing: 15.00
+        points: 10.00, // Reduzido para melhorar o desempenho
+        maxDistance: 20.00, // Reduzido para melhorar o desempenho
+        spacing: 20.00, // Ajustado para otimização
+        THREE: window.THREE
     });
 
-    // Implementar o cursor personalizado
     const cursor = document.querySelector('.custom-cursor');
     document.addEventListener('mousemove', (e) => {
-        cursor.style.left = `${e.clientX}px`;
-        cursor.style.top = `${e.clientY}px`;
+        gsap.to(cursor, { duration: 0.2, left: e.clientX, top: e.clientY });
     });
 
-    document.querySelectorAll('a, button').forEach(el => {
-        el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
-        el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+    document.querySelectorAll('button, input, a').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+            cursor.classList.add('interactive');
+        });
+        el.addEventListener('mouseleave', () => {
+            cursor.classList.remove('interactive');
+        });
     });
 
-    firebase.auth().onAuthStateChanged((user) => {
+    firebase.auth().onAuthStateChanged(async (user) => {
         if (user) {
             const urlParams = new URLSearchParams(window.location.search);
             const encryptedData = urlParams.get('data');
@@ -41,13 +44,55 @@ document.addEventListener('DOMContentLoaded', () => {
             const product = JSON.parse(atob(encryptedData));
             displayProductDetails(product);
 
-            const generateQRCodeButton = document.getElementById('generateQRCode');
-            generateQRCodeButton.addEventListener('click', () => generateQRCode(product));
+            const hasPurchased = await checkIfUserHasPurchased(user.uid, product.id);
+            if (hasPurchased) {
+                showDownloadOption(product);
+            } else {
+                const generateQRCodeButton = document.getElementById('generateQRCode');
+                generateQRCodeButton.addEventListener('click', () => generateQRCode(product));
+            }
         } else {
             window.location.href = 'login.html';
         }
     });
 });
+
+async function checkIfUserHasPurchased(userId, productId) {
+    const db = firebase.firestore();
+    const purchasesRef = db.collection('purchases');
+    const querySnapshot = await purchasesRef
+        .where('userId', '==', userId)
+        .where('productId', '==', productId)
+        .where('status', '==', 'completed')
+        .get();
+
+    return !querySnapshot.empty;
+}
+
+function showDownloadOption(product) {
+    const qrCodeContainer = document.getElementById('qrCodeContainer');
+    const generateQRCodeButton = document.getElementById('generateQRCode');
+    generateQRCodeButton.style.display = 'none';
+
+    let downloadButton = '';
+    if (product.downloadUrl) {
+        downloadButton = `
+            <a href="${product.downloadUrl}" download="${product.downloadFileName || 'produto'}" 
+               class="mt-4 bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition-all duration-300 neon-border">
+                Baixar Produto
+            </a>
+        `;
+    }
+
+    qrCodeContainer.innerHTML = `
+        <div class="bg-green-500 text-white p-4 rounded-lg text-center">
+            <h3 class="text-2xl font-bold mb-2">Produto Adquirido</h3>
+            <p class="mt-4 text-sm">Você já adquiriu este produto. Aproveite seu download!</p>
+        </div>
+        ${downloadButton}
+    `;
+    gsap.from(qrCodeContainer.children, {duration: 0.5, opacity: 0, y: 20, ease: "power2.out"});
+}
 
 function displayProductDetails(product) {
     const productDetails = document.getElementById('productDetails');

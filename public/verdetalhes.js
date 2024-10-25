@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const productId = urlParams.get('id');
 
-    // Inicializar o efeito de fundo Vanta.js
+    // Inicializar o efeito de fundo Vanta.js com configurações otimizadas
     VANTA.NET({
         el: "#vanta-background",
         mouseControls: true,
@@ -13,12 +13,16 @@ document.addEventListener('DOMContentLoaded', () => {
         minHeight: 200.00,
         minWidth: 200.00,
         scale: 1.00,
-        scaleMobile: 1.00,
+        scaleMobile: 0.75,
         color: 0x0000ff,
         backgroundColor: 0x000000,
-        points: 20.00,
-        maxDistance: 30.00,
-        spacing: 15.00
+        points: 10.00, // Reduzido de 20 para 10
+        maxDistance: 20.00, // Reduzido de 30 para 20
+        spacing: 20.00, // Aumentado de 15 para 20
+        showDots: false, // Desativa a renderização de pontos
+        backgroundColor: 0x000000,
+        backgroundAlpha: 0.9, // Reduz a opacidade do fundo
+        speed: 0.5 // Reduz a velocidade da animação
     });
 
     // Implementar o cursor personalizado com melhor desempenho
@@ -95,9 +99,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 .where('productId', '==', productId)
                 .get();
 
-            reviewsData = snapshot.docs.map(doc => doc.data());
+            reviewsData = await Promise.all(snapshot.docs.map(async doc => {
+                const review = doc.data();
+                const userSnapshot = await firebase.firestore().collection('usuarios').doc(review.userId).get();
+                const userData = userSnapshot.exists ? userSnapshot.data() : {};
+                return {
+                    id: doc.id, // Importante: incluir o ID do documento
+                    ...review,
+                    userPhotoURL: userData.profilePicUrl || '/path/to/default-profile.png',
+                    userName: userData.nome || 'Anônimo'
+                };
+            }));
+
             displayReviews();
-            animateReviews();
         } catch (error) {
             console.error('Erro ao carregar avaliações:', error);
             reviewsList.innerHTML = '<p class="text-red-500">Erro ao carregar avaliações. Por favor, tente novamente mais tarde.</p>';
@@ -105,15 +119,109 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function displayReviews() {
+        const reviewsList = document.getElementById('reviewsList');
         if (reviewsData.length === 0) {
             reviewsList.innerHTML = '<p class="text-gray-400">Ainda não há avaliações para este produto.</p>';
         } else {
-            reviewsList.innerHTML = reviewsData.map(review => `
-                <div class="review-card bg-gray-700 p-4 rounded mb-2">
-                    <p class="text-gray-300">${review.text}</p>
-                    <p class="text-sm text-gray-400">Por: ${review.userName}</p>
-                </div>
-            `).join('');
+            reviewsList.innerHTML = reviewsData.map(review => {
+                const isCurrentUser = firebase.auth().currentUser && firebase.auth().currentUser.uid === review.userId;
+                return `
+                    <div class="review-card bg-gray-700 p-4 rounded mb-2 flex items-center justify-between" data-review-id="${review.id}">
+                        <div class="flex items-center">
+                            <img src="${review.userPhotoURL}" alt="Foto de perfil" class="w-10 h-10 rounded-full mr-4">
+                            <div>
+                                <p class="text-blue-300 font-bold">${review.userName}</p>
+                                <p class="text-white review-text">${review.text}</p>
+                            </div>
+                        </div>
+                        ${isCurrentUser ? `
+                        <div class="relative">
+                            <button class="text-white focus:outline-none p-2" onclick="toggleOptionsMenu(this)">
+                                &#x22EE;
+                            </button>
+                            <div class="options-menu hidden absolute right-0 mt-2 w-48 bg-black bg-opacity-90 rounded-md shadow-lg z-50 flex">
+                                <button class="block px-4 py-2 text-sm text-blue-300 hover:bg-blue-600 hover:text-white" onclick="editComment('${review.id}')">Editar</button>
+                                <button class="block px-4 py-2 text-sm text-blue-300 hover:bg-blue-600 hover:text-white" onclick="deleteComment('${review.id}')">Remover</button>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+
+    window.toggleOptionsMenu = function(button) {
+        const menu = button.nextElementSibling;
+        menu.classList.toggle('hidden');
+        document.addEventListener('click', function hideMenu(e) {
+            if (!menu.contains(e.target) && e.target !== button) {
+                menu.classList.add('hidden');
+                document.removeEventListener('click', hideMenu);
+            }
+        });
+    }
+
+    window.editComment = async function(reviewId) {
+        const reviewCard = document.querySelector(`[data-review-id="${reviewId}"]`);
+        const reviewTextElement = reviewCard.querySelector('.review-text');
+        const originalText = reviewTextElement.textContent;
+        const editContainer = document.createElement('div');
+        
+        editContainer.innerHTML = `
+            <div class="relative w-full">
+                <textarea class="p-4 bg-gray-800 text-white rounded border border-blue-500 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 min-h-[150px] w-full">${originalText}</textarea>
+            </div>
+            <div class="flex space-x-2 mt-2">
+                <button class="neon-button-sm save-btn">Salvar</button>
+                <button class="neon-button-red-sm cancel-btn">Cancelar</button>
+            </div>
+        `;
+        reviewTextElement.replaceWith(editContainer);
+
+        const textarea = editContainer.querySelector('textarea');
+        textarea.style.width = '100%';
+        textarea.style.minWidth = '100%';
+        textarea.style.maxWidth = '100%';
+
+        const saveButton = editContainer.querySelector('.save-btn');
+        const cancelButton = editContainer.querySelector('.cancel-btn');
+
+        saveButton.addEventListener('click', async () => {
+            const newText = textarea.value;
+            if (newText && newText !== originalText) {
+                try {
+                    await firebase.firestore().collection('reviews').doc(reviewId).update({
+                        text: newText
+                    });
+                    console.log('Comentário editado com sucesso');
+                    reviewTextElement.textContent = newText;
+                    editContainer.replaceWith(reviewTextElement);
+                } catch (error) {
+                    console.error('Erro ao editar comentário:', error);
+                }
+            }
+        });
+
+        cancelButton.addEventListener('click', () => {
+            editContainer.replaceWith(reviewTextElement);
+        });
+    }
+
+    window.deleteComment = async function(reviewId) {
+        try {
+            await firebase.firestore().collection('reviews').doc(reviewId).delete();
+            console.log('Comentário removido com sucesso');
+            
+            // Atualiza a lista local de reviews
+            reviewsData = reviewsData.filter(review => review.id !== reviewId);
+            displayReviews();
+            
+            // Mostra feedback visual
+            showFeedback('Comentário removido com sucesso', 'success');
+        } catch (error) {
+            console.error('Erro ao remover comentário:', error);
+            showFeedback('Erro ao remover comentário', 'error');
         }
     }
 
@@ -162,7 +270,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p class="text-sm text-gray-400 mb-4">Categoria: ${product.category || 'Sem categoria'}</p>
                     ${keyOptionsHtml}
                     ${downloadInfo}
-                    <button id="buyNowBtn" class="buy-now bg-green-600 text-white px-6 py-3 rounded-full hover:bg-green-700 transition-all duration-300 neon-border mt-4">Comprar Agora</button>
+                    <div id="actionButtonContainer" class="mt-4">
+                        <button id="buyNowBtn" class="mt-6 neon-button">Comprar Agora</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -179,7 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 product.selectedDuration = e.target.value;
                 product.currentPrice = newPrice;
             });
-            // Trigger change event to set initial price and duration
             durationSelect.dispatchEvent(new Event('change'));
         }
     }
@@ -245,16 +354,97 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Inicializar componentes após o carregamento do DOM
-    firebase.auth().onAuthStateChanged((user) => {
+    firebase.auth().onAuthStateChanged(async (user) => {
         if (user) {
-            Promise.all([
-                loadProductDetails(productId),
-                loadReviews(productId)
-            ]);
+            try {
+                const [product, reviews] = await Promise.all([
+                    loadProductDetails(productId),
+                    loadReviews(productId)
+                ]);
+
+                const hasPurchased = await checkIfUserHasPurchased(user.uid, productId);
+                if (hasPurchased) {
+                    showDownloadOption(product);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+            }
         } else {
             window.location.href = 'login.html';
         }
     });
+
+    async function checkIfUserHasPurchased(userId, productId) {
+        const db = firebase.firestore();
+        const purchasesRef = db.collection('purchases');
+        const querySnapshot = await purchasesRef
+            .where('userId', '==', userId)
+            .where('productId', '==', productId)
+            .where('status', '==', 'completed')
+            .get();
+
+        return !querySnapshot.empty;
+    }
+
+    function showDownloadOption(product) {
+        const purchaseInfo = `
+            <p class="text-green-500 mt-2">Você já adquiriu este produto!</p>
+        `;
+        const downloadButton = `
+            <div class="mt-4">
+                <a href="${product.downloadUrl}" download="${product.downloadFileName || 'produto'}" 
+                   class="mt-6 neon-button">Baixar</a>
+            </div>
+        `;
+        document.getElementById('actionButtonContainer').innerHTML = purchaseInfo + downloadButton;
+        showCommentSection(); // Mostra a seção de comentários
+    }
+
+    function showCommentSection() {
+        const commentSection = `
+            <div class="mt-8">
+                <h3 class="text-xl font-bold text-blue-400 mb-2">Deixe seu comentário:</h3>
+                <textarea class="w-full p-2 bg-gray-800 text-white rounded border border-blue-500 focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50" rows="4" placeholder="Escreva seu comentário aqui..."></textarea>
+                <button id="sendCommentBtn" class="mt-6 neon-button">Enviar Comentário</button>
+            </div>
+        `;
+        productDetails.innerHTML += commentSection;
+
+        const commentButton = document.getElementById('sendCommentBtn');
+        commentButton.addEventListener('click', async () => {
+            const commentText = document.querySelector('textarea').value;
+            console.log('Botão de enviar comentário clicado');
+            console.log('Texto do comentário:', commentText);
+            if (commentText.trim() === '') {
+                console.error('Erro: Comentário vazio');
+                return;
+            }
+            console.log('Comentário não está vazio, processando...');
+
+            try {
+                const user = firebase.auth().currentUser;
+                if (!user) {
+                    console.error('Usuário não autenticado');
+                    return;
+                }
+
+                const reviewData = {
+                    productId: productId,
+                    userId: user.uid,
+                    userName: user.displayName || 'Anônimo',
+                    userPhotoURL: user.photoURL || 'default-profile.png',
+                    text: commentText,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                await firebase.firestore().collection('reviews').add(reviewData);
+                console.log('Comentário salvo com sucesso');
+                loadReviews(productId); // Recarregar as avaliações para exibir o novo comentário
+            } catch (error) {
+                console.error('Erro ao salvar comentário:', error);
+            }
+        });
+    }
 
     // Remover animações duplicadas
     // gsap.from(productDetails, {duration: 1, opacity: 0, y: 50, ease: "power3.out"});
